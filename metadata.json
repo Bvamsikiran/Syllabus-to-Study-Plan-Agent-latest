@@ -1,0 +1,10 @@
+{
+  "name": "Remix Syllabus-to-Study-Plan-Agent",
+  "description": "Imported from GitHub: Bvamsikiran/Syllabus-to-Study-Plan-Agent",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

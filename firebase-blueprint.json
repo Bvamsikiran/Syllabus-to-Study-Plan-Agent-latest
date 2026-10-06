@@ -1,0 +1,91 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and global study configuration",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "targetDate": { "type": "string" },
+        "targetScore": { "type": "number" },
+        "retentionMode": { "type": "string", "enum": ["aggressive", "balanced"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "targetDate", "createdAt", "updatedAt"]
+    },
+    "StudyPlan": {
+      "title": "StudyPlan",
+      "description": "AI-generated adaptive study plan derived from syllabus",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "courseName": { "type": "string" },
+        "modulesCount": { "type": "number" },
+        "confidence": { "type": "number" },
+        "units": { "type": "array" },
+        "milestones": { "type": "array" },
+        "pacing": { "type": "object" },
+        "scheduleSlots": { "type": "object" },
+        "generatedSchedule": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "courseName", "createdAt", "updatedAt"]
+    },
+    "QuizResult": {
+      "title": "QuizResult",
+      "description": "Voice recall quiz diagnostic scoring and feedback",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "questionTitle": { "type": "string" },
+        "transcript": { "type": "string" },
+        "score": { "type": "number" },
+        "retentionDelta": { "type": "string" },
+        "correctInsights": { "type": "array" },
+        "spokenSummary": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "score", "createdAt"]
+    },
+    "HandwrittenWork": {
+      "title": "HandwrittenWork",
+      "description": "Mechanistic rubric grading for handwritten chemistry and biology calculations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "promptContext": { "type": "string" },
+        "score": { "type": "number" },
+        "maxScore": { "type": "number" },
+        "rubricMet": { "type": "string" },
+        "pins": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "score", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user account settings and study parameters"
+    },
+    "/users/{userId}/studyPlans/{planId}": {
+      "schema": { "$ref": "#/entities/StudyPlan" },
+      "description": "Generated course syllabi plans, units, and pacing schedules"
+    },
+    "/users/{userId}/quizResults/{quizId}": {
+      "schema": { "$ref": "#/entities/QuizResult" },
+      "description": "Active voice recall diagnostic evaluations and scores"
+    },
+    "/users/{userId}/handwrittenWork/{workId}": {
+      "schema": { "$ref": "#/entities/HandwrittenWork" },
+      "description": "Vision analysis rubric evaluations and mechanistic annotations"
+    }
+  }
+}
