@@ -20,8 +20,8 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ currentScree
     { id: 'step2-exam', label: 'Step 2: Exam & Goals', tag: 'Milestones' },
     { id: 'step3-bandwidth', label: 'Step 3: Bandwidth', tag: 'Availability' },
     { id: 'step4-resources', label: 'Step 4: Resources', tag: 'Synthesis' },
-    { id: 'dashboard', label: 'Study Dashboard', tag: 'Foundations 2025' },
-    { id: 'voice-quiz', label: 'Voice Recall Quiz', tag: 'Active Recall' },
+    { id: 'dashboard', label: 'Study Hub', tag: 'Active Roadmap' },
+    { id: 'voice-coach', label: 'Voice Study Coach', tag: 'Live S2S' },
     { id: 'handwritten-analysis', label: 'Answer Analysis', tag: 'AI Grading' },
   ];
 
@@ -42,7 +42,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ currentScree
   }
 
   return (
-    <div className="sticky top-0 z-50 w-full bg-[#0c0c0f]/95 border-b border-[#27272a] backdrop-blur-md px-3 py-1.5 shadow-md flex items-center justify-between text-xs font-mono">
+    <div className="sticky top-0 z-50 w-full glass-panel border-b border-outline-variant px-3 py-1.5 shadow-md flex items-center justify-between text-xs font-mono">
       <div className="flex items-center gap-2 overflow-x-auto py-0.5 no-scrollbar">
         <span className="text-secondary text-[11px] font-semibold flex items-center gap-1 shrink-0 pl-1">
           <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
@@ -57,7 +57,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ currentScree
                 onClick={() => onNavigate(screen.id)}
                 className={`px-2.5 py-1 rounded text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
                   isActive
-                    ? 'bg-primary text-on-primary font-bold shadow-[0_0_12px_rgba(167,139,250,0.35)]'
+                    ? 'bg-primary text-on-primary font-bold glow-primary'
                     : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest border border-outline-variant'
                 }`}
               >

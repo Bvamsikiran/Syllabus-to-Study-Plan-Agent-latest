@@ -103,6 +103,14 @@ service cloud.firestore {
                       && incoming().id == existing().id && incoming().userId == existing().userId;
         allow delete: if isOwner(userId) && isValidId(workId);
       }
+
+      // Subcollection: Voice Study Coach Sessions & Conversations
+      match /voiceSessions/{sessionId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(sessionId);
+        allow update: if isOwner(userId) && isValidId(sessionId);
+        allow delete: if isOwner(userId) && isValidId(sessionId);
+      }
     }
   }
 }

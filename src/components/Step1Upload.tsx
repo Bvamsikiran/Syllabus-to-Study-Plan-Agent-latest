@@ -22,7 +22,7 @@ export const Step1Upload: React.FC<Step1UploadProps> = ({
   const { setDriveModalOpen, setSlidesModalOpen, setFormsModalOpen, setGmailModalOpen } = useGoogleAuth();
   const [isParsing, setIsParsing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [targetCourse, setTargetCourse] = useState('mcat');
+  const [targetCourse, setTargetCourse] = useState('cs');
   const [lmsConnected, setLmsConnected] = useState(false);
   const [showLmsInfo, setShowLmsInfo] = useState(false);
   const [fileDetails, setFileDetails] = useState<{ name: string; size: string } | null>(null);
@@ -307,9 +307,9 @@ Official Practice Sim: Nov 20 (Weight: 45%)`);
                 }
               }}
               onClick={() => document.getElementById('syllabusFileInput')?.click()}
-              className={`group relative rounded-lg border-2 border-dashed ${
-                isDragging ? 'border-primary bg-primary/10' : 'border-outline-variant hover:border-primary/80 bg-surface-container-low'
-              } p-8 flex flex-col items-center justify-center text-center transition-all duration-200 cursor-pointer`}
+              className={`drop-zone group relative rounded-2xl ${
+                isDragging ? 'active border-primary bg-primary/10' : 'border-outline-variant hover:border-primary/80 bg-surface-container-low'
+              } p-8 flex flex-col items-center justify-center text-center transition-all duration-200 cursor-pointer glass-card`}
             >
               <input
                 id="syllabusFileInput"
@@ -531,7 +531,7 @@ Oct 14: Midterm Exam 1 (Weight: 25%)`}
                     type="button"
                     onClick={() => {
                       setLmsConnected(true);
-                      loadSample('biochem');
+                      loadSample('dist-sys');
                     }}
                     className="font-mono text-xs text-primary hover:underline font-semibold"
                   >

@@ -68,41 +68,41 @@ export const GoogleFormsModal: React.FC<GoogleFormsModalProps> = ({
     setShowConfirmExport(false);
 
     try {
-      const title = `MCAT Enzyme Kinetics & Biochem Active Recall Diagnostic`;
-      const description = `Synapse AI Diagnostic Assessment: Test core conceptual mastery of competitive inhibition, Km, Vmax, and Lineweaver-Burk plots.`;
+      const title = `Systems Architecture & Consensus Active Recall Diagnostic`;
+      const description = `Synapse AI Diagnostic Assessment: Test core conceptual mastery of Distributed Consensus, Raft Leader Election, Virtual Memory Paging, and Cache Coherence.`;
 
       const questions: FormQuestionPayload[] = [
         {
-          title: 'Explain how a competitive inhibitor affects Km and Vmax of an enzyme-catalyzed reaction:',
+          title: 'In the Raft consensus protocol, what condition must a candidate satisfy to win an election?',
           type: 'RADIO',
           options: [
-            'Km increases (apparent affinity decreases); Vmax remains unchanged',
-            'Km remains unchanged; Vmax decreases proportionally',
-            'Both Km and Vmax decrease by the same factor',
-            'Km decreases; Vmax increases due to active site competition',
+            'Receive votes from a strict majority (quorum) of cluster nodes and possess an up-to-date log',
+            'Have the smallest node ID and a synchronized wall-clock timestamp',
+            'Broadcast heartbeats faster than the election timeout threshold',
+            'Acknowledge committed entries from the previous term only',
           ],
         },
         {
-          title: 'On a Lineweaver-Burk double reciprocal plot, what happens in the presence of a competitive inhibitor?',
+          title: 'In a multi-level virtual memory paging system, what is the effective memory access time (EMAT) with TLB hit ratio h?',
           type: 'RADIO',
           options: [
-            'The y-intercept (1/Vmax) stays unchanged, and the slope (Km/Vmax) increases',
-            'The y-intercept shifts upward, while the x-intercept is fixed',
-            'The x-intercept shifts farther away from the origin',
-            'Both slope and y-intercept decrease',
+            'EMAT = h * (TLB + M) + (1 - h) * (TLB + (k + 1) * M) where k is the number of page table levels',
+            'EMAT = h * M + (1 - h) * TLB',
+            'EMAT = (TLB + M) / (1 - h)',
+            'EMAT = h * (TLB + 2*M) + (1 - h) * (TLB + M)',
           ],
         },
         {
-          title: 'Describe why high substrate concentrations can overcome competitive inhibition, and why turnover (kcat) remains constant:',
+          title: 'Explain how Compare-And-Swap (CAS) enables lock-free concurrent queue operations and how the ABA problem is mitigated:',
           type: 'PARAGRAPH_TEXT',
         },
         {
-          title: 'Self-Assess Confidence: How prepared do you feel on Michaelis-Menten kinetics for exam day?',
+          title: 'Self-Assess Confidence: How prepared do you feel on Distributed Systems & Algorithms for benchmark exams?',
           type: 'RADIO',
           options: [
-            '100% Confident — Ready for AAMC Section Bank',
+            '100% Confident — Ready for full technical benchmark exams',
             '75% Confident — Need 1 more voice recall drill',
-            '50% Confident — Need to re-read Kaplan Ch. 2',
+            '50% Confident — Need to review core systems literature',
           ],
         },
       ];

@@ -480,8 +480,8 @@ export const VoiceRecallQuiz: React.FC<VoiceRecallQuizProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: questionText,
-          voiceName: 'Zephyr',
-          style: 'Clear, encouraging medical professor asking an oral exam question',
+          voiceName: 'Puck',
+          style: 'Clear, encouraging academic professor and technical mentor asking an oral exam question',
         }),
       });
       const data = await res.json();
@@ -793,9 +793,9 @@ export const VoiceRecallQuiz: React.FC<VoiceRecallQuizProps> = ({
             <button
               onClick={loadSampleAnswer}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high border border-outline-variant hover:bg-surface-container-highest text-xs font-medium text-on-surface transition-colors cursor-pointer"
-              title="Load full biochemical response to test pipeline"
+              title="Load sample technical derivation to test pipeline"
             >
-              <span className="material-symbols-outlined !text-base text-secondary">science</span>
+              <span className="material-symbols-outlined !text-base text-secondary">terminal</span>
               <span>Test Sample Answer</span>
             </button>
 

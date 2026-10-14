@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ScreenId, SyllabusModule } from '../types';
 import { useGoogleAuth } from '../context/GoogleAuthContext';
-import { HardDrive, Mail, Presentation, FileQuestion, Cloud, CheckCircle } from 'lucide-react';
+import { HardDrive, Mail, Presentation, FileQuestion, Cloud, CheckCircle, Mic, Sparkles } from 'lucide-react';
 import { saveStudyPlanToFirestore } from '../services/firestoreService';
 
 interface StudyDashboardProps {
@@ -19,9 +19,9 @@ export const StudyDashboard: React.FC<StudyDashboardProps> = ({
   onNavigate,
   modules,
   setModules,
-  courseName = 'MCAT Foundations: Biological & Biochemical Prep',
+  courseName = 'Distributed Systems & Engineering',
   targetDate = '2025-11-28',
-  targetScore = 518,
+  targetScore = 95,
   slots = {},
   retentionMode = 'aggressive',
 }) => {
@@ -296,7 +296,7 @@ export const StudyDashboard: React.FC<StudyDashboardProps> = ({
         <div className="flex items-center space-x-6">
           <button className="text-primary border-b-2 border-primary font-medium py-2.5 flex items-center gap-1.5">
             <span className="material-symbols-outlined text-base">school</span>
-            MCAT Prep 2025
+            {courseName || 'Master Study Plan'}
           </button>
           <button
             onClick={() => onNavigate('master-schedule')}
@@ -485,6 +485,39 @@ export const StudyDashboard: React.FC<StudyDashboardProps> = ({
 
         {/* ================= COLUMN B: CENTER AREA ================= */}
         <section className="lg:col-span-6 flex flex-col gap-4">
+          {/* Voice Study Coach Interactive Hero Widget */}
+          <div className="glass-card card-hover rounded-xl p-4 border border-primary/40 relative overflow-hidden group">
+            <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/20 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-lg glow-primary">
+                    <Mic className="w-5 h-5 text-purple-200" />
+                  </div>
+                  <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#09090c] animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-headline font-bold text-on-surface">Gemini Live Voice Study Coach</h3>
+                    <span className="px-1.5 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-[9px] font-mono text-purple-300 font-semibold uppercase">
+                      Native S2S
+                    </span>
+                  </div>
+                  <p className="text-xs text-on-surface-variant mt-0.5">
+                    Real-time oral exam preparation grounded in your {modules.length} syllabus modules.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => onNavigate('voice-coach')}
+                className="glow-pill px-4 py-2 rounded-lg bg-primary text-on-primary text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-primary-fixed-dim transition-all cursor-pointer whitespace-nowrap"
+              >
+                <span>Start Oral Session</span>
+                <span className="material-symbols-outlined text-xs">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+
           {/* Timeline Header & Controls */}
           <div className="glass-panel rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div>
@@ -687,10 +720,10 @@ export const StudyDashboard: React.FC<StudyDashboardProps> = ({
                           <span className="material-symbols-outlined text-xs">draw</span> Mechanism Practice
                         </button>
                         <button
-                          onClick={() => onNavigate('voice-quiz')}
+                          onClick={() => onNavigate('voice-coach')}
                           className="px-2.5 py-1 rounded-md bg-surface-variant hover:bg-surface-container-high border border-outline-variant text-[11px] text-amber-400 flex items-center gap-1.5 font-mono cursor-pointer"
                         >
-                          <span className="material-symbols-outlined text-xs">mic</span> Voice Recall Sprint
+                          <span className="material-symbols-outlined text-xs">mic</span> Voice Study Coach
                         </button>
                       </div>
 

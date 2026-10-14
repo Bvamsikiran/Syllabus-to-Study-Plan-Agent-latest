@@ -18,38 +18,37 @@ interface SuggestionItem {
   type: ResourceItem['type'];
   meta: string;
   role: ResourceItem['role'];
-  subject: 'biochem' | 'chem' | 'physics' | 'cs' | 'general';
+  subject: 'ai_ml' | 'cs' | 'systems' | 'math' | 'general';
 }
 
 const EXTENSIVE_SUGGESTIONS: SuggestionItem[] = [
-  // Biochemistry & Biology
-  { name: 'UWorld Question Bank', category: 'Question Bank', type: 'Question Bank', meta: '2,100 High-Yield Passages', role: 'Benchmark Core', subject: 'biochem' },
-  { name: 'Kaplan Comprehensive Review 2025', category: 'Textbook / Book', type: 'Textbook / Book', meta: '450 Pages • Theory Core', role: 'Primary Core', subject: 'biochem' },
-  { name: 'Anki MileDown High-Yield Deck', category: 'Notes / Anki Deck', type: 'Notes / Anki Deck', meta: '2,880 Spaced Flashcards', role: 'Spaced Practice', subject: 'biochem' },
-  { name: 'Khan Academy Medicine & MCAT', category: 'Video Course / Lecture', type: 'Video Course / Lecture', meta: '32 Hours Video Modules', role: 'Supplemental', subject: 'biochem' },
-  { name: 'Lehninger Principles of Biochemistry', category: 'Textbook / Book', type: 'Textbook / Book', meta: 'Chapters 6, 12, 14, 19', role: 'Primary Core', subject: 'biochem' },
-  { name: 'Ninja Nerd Science Lectures', category: 'Video Course / Lecture', type: 'Video Course / Lecture', meta: 'High-Yield Pathway Diagrams', role: 'Supplemental', subject: 'biochem' },
+  // AI & Machine Learning
+  { name: 'Deep Learning (Ian Goodfellow, Bengio)', category: 'Textbook / Book', type: 'Textbook / Book', meta: 'MIT Press • 800 Pages Core', role: 'Primary Core', subject: 'ai_ml' },
+  { name: 'Coursera Deep Learning Specialization (Andrew Ng)', category: 'Video Course / Lecture', type: 'Video Course / Lecture', meta: '5-Course Neural Net Specialization', role: 'Supplemental', subject: 'ai_ml' },
+  { name: 'Hugging Face NLP & Transformer Course', category: 'Notes / Anki Deck', type: 'Notes / Anki Deck', meta: 'Attention, Tokenizers & Fine-Tuning', role: 'Spaced Practice', subject: 'ai_ml' },
+  { name: 'Fast.ai Practical Deep Learning for Coders', category: 'Video Course / Lecture', type: 'Video Course / Lecture', meta: 'PyTorch Architecture Labs', role: 'Supplemental', subject: 'ai_ml' },
+  { name: 'Pattern Recognition and Machine Learning (Bishop)', category: 'Textbook / Book', type: 'Textbook / Book', meta: 'Probabilistic ML Standard', role: 'Primary Core', subject: 'ai_ml' },
 
-  // Chemistry & Organic Mechanisms
-  { name: 'The Organic Chemistry Tutor (YouTube)', category: 'Video Course / Lecture', type: 'Video Course / Lecture', meta: 'Mechanism Walkthroughs', role: 'Supplemental', subject: 'chem' },
-  { name: 'Master Organic Chemistry Summary Sheets', category: 'Notes / Anki Deck', type: 'Notes / Anki Deck', meta: 'Reaction Guides & Arrow Pushing', role: 'Spaced Practice', subject: 'chem' },
-  { name: 'ChadsPrep Science Quizzes', category: 'Question Bank', type: 'Question Bank', meta: 'Over 1,200 Practice Drills', role: 'Primary Core', subject: 'chem' },
-  { name: 'OpenStax Chemistry 2e', category: 'Textbook / Book', type: 'Textbook / Book', meta: 'Open-Access College Textbook', role: 'Primary Core', subject: 'chem' },
+  // Systems & Distributed Engineering
+  { name: 'Designing Data-Intensive Applications (Kleppmann)', category: 'Textbook / Book', type: 'Textbook / Book', meta: 'Distributed Data Systems Core', role: 'Primary Core', subject: 'systems' },
+  { name: 'Operating System Concepts (Silberschatz)', category: 'Textbook / Book', type: 'Textbook / Book', meta: 'Virtual Memory, TLB & Paging', role: 'Primary Core', subject: 'systems' },
+  { name: 'Computer Networks: A Systems Approach (Peterson)', category: 'Textbook / Book', type: 'Textbook / Book', meta: 'TCP Congestion, BBR & Routing', role: 'Primary Core', subject: 'systems' },
+  { name: 'MIT 6.824 Distributed Systems Lectures', category: 'Video Course / Lecture', type: 'Video Course / Lecture', meta: 'Raft, Paxos & Fault Tolerance', role: 'Supplemental', subject: 'systems' },
 
-  // Physics & Mathematics
-  { name: '3Blue1Brown Essence of Mathematics', category: 'Video Course / Lecture', type: 'Video Course / Lecture', meta: 'Intuitive Concept Visualizations', role: 'Supplemental', subject: 'physics' },
-  { name: 'MIT OpenCourseWare Lecture Series', category: 'Video Course / Lecture', type: 'Video Course / Lecture', meta: 'Full Semester Course Lectures', role: 'Primary Core', subject: 'physics' },
-  { name: 'Giancoli Physics for Scientists & Engineers', category: 'Textbook / Book', type: 'Textbook / Book', meta: 'Calculus-based Physics Problems', role: 'Primary Core', subject: 'physics' },
+  // Mathematics & Statistics
+  { name: 'Gilbert Strang MIT 18.06 Linear Algebra', category: 'Video Course / Lecture', type: 'Video Course / Lecture', meta: 'Eigenvalues, SVD & Projections', role: 'Supplemental', subject: 'math' },
+  { name: 'Sheldon Ross Introduction to Probability Models', category: 'Textbook / Book', type: 'Textbook / Book', meta: 'Markov Chains & Poisson Processes', role: 'Primary Core', subject: 'math' },
+  { name: '3Blue1Brown Essence of Linear Algebra & Calculus', category: 'Video Course / Lecture', type: 'Video Course / Lecture', meta: 'Geometric Concept Visualizations', role: 'Supplemental', subject: 'math' },
 
-  // Computer Science & Engineering
-  { name: 'LeetCode Study Plan (Top 150)', category: 'Question Bank', type: 'Question Bank', meta: 'Algorithms & Data Structures', role: 'Benchmark Core', subject: 'cs' },
-  { name: 'Harvard CS50 Course Material', category: 'Video Course / Lecture', type: 'Video Course / Lecture', meta: 'Problem Sets & Walkthroughs', role: 'Primary Core', subject: 'cs' },
-  { name: 'Grokking the Coding Interview', category: 'Notes / Anki Deck', type: 'Notes / Anki Deck', meta: 'Pattern Recognition Flashcards', role: 'Spaced Practice', subject: 'cs' },
+  // Computer Science & Data Structures
+  { name: 'Introduction to Algorithms (CLRS 4th Edition)', category: 'Textbook / Book', type: 'Textbook / Book', meta: 'Core Algorithms & Data Structures', role: 'Primary Core', subject: 'cs' },
+  { name: 'LeetCode Study Plan (Top 150 & 75 Blind)', category: 'Question Bank', type: 'Question Bank', meta: 'Graphs, DP & Tree Traversal', role: 'Benchmark Core', subject: 'cs' },
+  { name: 'Grokking the System Design Interview', category: 'Notes / Anki Deck', type: 'Notes / Anki Deck', meta: 'Scalability & Microservices', role: 'Spaced Practice', subject: 'cs' },
 
-  // General & Standardized Exam
-  { name: 'AAMC Official Full-Length Practice Exams', category: 'Practice Exam / Paper', type: 'Practice Exam / Paper', meta: 'Full-Scale Diagnostic Exams', role: 'Benchmark Core', subject: 'general' },
-  { name: 'Notion Active Recall Knowledge Base', category: 'Notes / Anki Deck', type: 'Notes / Anki Deck', meta: 'Structured Cornell Notes', role: 'Spaced Practice', subject: 'general' },
-  { name: 'Quizlet Spaced Terms & Definitions', category: 'Notes / Anki Deck', type: 'Notes / Anki Deck', meta: 'Key Vocabulary & Formulas', role: 'Spaced Practice', subject: 'general' },
+  // Benchmark Practice & General
+  { name: 'GATE CS & DA 15-Year Solved Papers (2010–2025)', category: 'Practice Exam / Paper', type: 'Practice Exam / Paper', meta: '3,800+ Verified Examination Questions', role: 'Benchmark Core', subject: 'general' },
+  { name: 'Anki CS & DA High-Yield Formula Flashcard Deck', category: 'Notes / Anki Deck', type: 'Notes / Anki Deck', meta: '3,200 Active Recall Cards', role: 'Spaced Practice', subject: 'general' },
+  { name: 'Full-Length Technical Benchmark Mock Exams', category: 'Practice Exam / Paper', type: 'Practice Exam / Paper', meta: 'Timed Full-Scale Diagnostic Drills', role: 'Benchmark Core', subject: 'general' },
 ];
 
 export const Step4Resources: React.FC<Step4ResourcesProps> = ({
@@ -57,13 +56,13 @@ export const Step4Resources: React.FC<Step4ResourcesProps> = ({
   resources,
   setResources,
   modules = [],
-  courseName = 'MCAT Foundations Biochem',
+  courseName = 'Distributed Systems & Engineering',
 }) => {
   const { setDriveModalOpen, setSlidesModalOpen, setFormsModalOpen, user } = useGoogleAuth();
   const [activeCategory, setActiveCategory] = useState<string>('Textbook / Book');
   const [resourceInput, setResourceInput] = useState('');
   const [resourceRole, setResourceRole] = useState<ResourceItem['role']>('Primary Core');
-  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<'all' | 'biochem' | 'chem' | 'physics' | 'cs' | 'general'>('all');
+  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<'all' | 'ai_ml' | 'systems' | 'math' | 'cs' | 'general'>('all');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAutoMapping, setIsAutoMapping] = useState(false);
   const [addFeedback, setAddFeedback] = useState<string | null>(null);
@@ -302,7 +301,7 @@ export const Step4Resources: React.FC<Step4ResourcesProps> = ({
                     required
                     value={resourceInput}
                     onChange={(e) => setResourceInput(e.target.value)}
-                    placeholder="Enter resource title (e.g., Campbell Biology Ch. 8, First Aid 2025, UWorld QBank)..."
+                    placeholder="Enter resource title (e.g., CLRS Ch. 4, Goodfellow Deep Learning, LeetCode Top 150)..."
                     className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-lg px-3.5 py-2.5 text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-primary transition-colors"
                   />
                   <select
@@ -383,9 +382,9 @@ export const Step4Resources: React.FC<Step4ResourcesProps> = ({
               <div className="flex flex-wrap gap-1.5 pb-1 border-b border-outline-variant/60">
                 {[
                   { id: 'all', label: 'All Subjects' },
-                  { id: 'biochem', label: 'Biochem & Bio' },
-                  { id: 'chem', label: 'Chemistry' },
-                  { id: 'physics', label: 'Physics & Math' },
+                  { id: 'ai_ml', label: 'AI & Machine Learning' },
+                  { id: 'systems', label: 'Systems & OS' },
+                  { id: 'math', label: 'Math & Stats' },
                   { id: 'cs', label: 'Computer Science' },
                   { id: 'general', label: 'Exams & General' },
                 ].map((tab) => (

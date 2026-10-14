@@ -7,7 +7,31 @@ export type ScreenId =
   | 'step4-resources'
   | 'dashboard'
   | 'voice-quiz'
+  | 'voice-coach'
   | 'handwritten-analysis';
+
+export interface VoiceTurn {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  timestamp: number;
+  sources?: Array<{
+    title: string;
+    section?: string;
+    snippet?: string;
+  }>;
+}
+
+export interface VoiceSession {
+  sessionId: string;
+  title: string;
+  courseName: string;
+  createdAt: number;
+  updatedAt: number;
+  lastTurnAt: number;
+  turns: VoiceTurn[];
+  sourceIds?: string[];
+}
 
 export interface SyllabusModule {
   id: string;

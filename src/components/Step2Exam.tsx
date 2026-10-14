@@ -54,7 +54,7 @@ export const Step2Exam: React.FC<Step2ExamProps> = ({
   }, [targetDate]);
 
   // Scoring Scheme state
-  const [scoreScheme, setScoreScheme] = useState<'marks' | 'percentage' | 'mcat' | 'custom'>('marks');
+  const [scoreScheme, setScoreScheme] = useState<'marks' | 'percentage' | 'benchmark' | 'custom'>('marks');
   const [baseScore, setBaseScore] = useState<number>(40);
   const [maxScore, setMaxScore] = useState<number>(100);
 
@@ -148,7 +148,7 @@ export const Step2Exam: React.FC<Step2ExamProps> = ({
   };
 
   // Pre-fill scoring preset
-  const handleSelectScheme = (scheme: 'marks' | 'percentage' | 'mcat' | 'custom') => {
+  const handleSelectScheme = (scheme: 'marks' | 'percentage' | 'benchmark' | 'custom') => {
     setScoreScheme(scheme);
     if (scheme === 'marks') {
       setBaseScore(40);
@@ -158,10 +158,10 @@ export const Step2Exam: React.FC<Step2ExamProps> = ({
       setBaseScore(50);
       setMaxScore(100);
       setTargetScore(90);
-    } else if (scheme === 'mcat') {
-      setBaseScore(480);
-      setMaxScore(528);
-      setTargetScore(518);
+    } else if (scheme === 'benchmark') {
+      setBaseScore(55);
+      setMaxScore(100);
+      setTargetScore(90);
     } else {
       // Custom based on syllabus pages/units:
       const unitCount = parsedData?.units?.length || 5;
@@ -574,9 +574,9 @@ export const Step2Exam: React.FC<Step2ExamProps> = ({
 
                 <button
                   type="button"
-                  onClick={() => handleSelectScheme('mcat')}
+                  onClick={() => handleSelectScheme('benchmark')}
                   className={`p-2.5 rounded-lg border text-left text-xs font-mono transition-all ${
-                    scoreScheme === 'mcat'
+                    scoreScheme === 'benchmark'
                       ? 'border-primary bg-primary/10 text-primary font-bold'
                       : 'border-outline-variant bg-surface-container-low text-zinc-400 hover:border-zinc-500'
                   }`}
@@ -688,14 +688,47 @@ export const Step2Exam: React.FC<Step2ExamProps> = ({
 
           {/* Right Column (5 Cols) - Syllabus Breakdown Preview */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="bg-surface-container border border-outline-variant rounded-xl p-5 space-y-4">
+            <div className="glass-card card-hover border border-outline-variant rounded-xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-mono font-semibold uppercase text-secondary">
                   Detected Syllabus Pacing Matrix
                 </h3>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-tertiary-container/30 text-tertiary">
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-tertiary-container/30 text-tertiary border border-tertiary/20">
                   {daysRemaining} Days Available
                 </span>
+              </div>
+
+              {/* Animated Progress Gauge */}
+              <div className="flex items-center justify-center py-2">
+                <div className="relative w-28 h-28 flex items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      className="stroke-surface-container-highest"
+                      strokeWidth="8"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      className="stroke-primary gauge-arc"
+                      strokeWidth="8"
+                      strokeDasharray="251.2"
+                      strokeDashoffset={251.2 - (251.2 * Math.min(100, Math.max(0, targetScore))) / 100}
+                      strokeLinecap="round"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <div className="absolute flex flex-col items-center justify-center text-center">
+                    <span className="text-xl font-headline font-bold text-on-surface">
+                      {targetScore}%
+                    </span>
+                    <span className="text-[9px] font-mono text-zinc-400 uppercase">Target</span>
+                  </div>
+                </div>
               </div>
 
               <div className="p-4 rounded-lg bg-surface-container-low border border-outline-variant space-y-3">
@@ -710,7 +743,7 @@ export const Step2Exam: React.FC<Step2ExamProps> = ({
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-zinc-400">Required Study Velocity:</span>
+                  <span className="text-zinc-400">Required Velocity:</span>
                   <span className="text-zinc-200 font-mono">
                     {daysRemaining > 0 ? (maxScore / Math.max(1, daysRemaining)).toFixed(1) : '0'}{' '}
                     marks / day
@@ -721,10 +754,11 @@ export const Step2Exam: React.FC<Step2ExamProps> = ({
               <div className="space-y-2">
                 <span className="text-xs font-mono text-zinc-400">Core Syllabus Units to Schedule:</span>
                 {(parsedData?.units || [
-                  { name: 'Cellular Energetics & Glycolysis', weight: 22 },
-                  { name: 'Michaelis-Menten Kinetics', weight: 18 },
-                  { name: 'Organic Reaction Mechanisms', weight: 25 },
-                  { name: 'Nucleic Acid Structure', weight: 20 },
+                  { name: 'Distributed Consensus & Raft Quorums', weight: 25 },
+                  { name: 'Virtual Memory & Multi-Level Page Tables', weight: 20 },
+                  { name: 'Lock-Free Queues & Memory Barriers', weight: 18 },
+                  { name: 'Two-Phase Commit & WAL Internals', weight: 22 },
+                  { name: 'Asynchronous Event Loops & Non-blocking I/O', weight: 15 },
                 ]).map((u: any, idx: number) => (
                   <div
                     key={idx}

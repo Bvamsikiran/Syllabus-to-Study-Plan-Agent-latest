@@ -367,3 +367,99 @@ export async function getHandwrittenWorksFromFirestore(): Promise<FirestoreHandw
     handleFirestoreError(err, OperationType.LIST, path);
   }
 }
+
+// 5. Voice Study Coach Session & Conversation Memory Persistence
+export interface FirestoreVoiceSession {
+  sessionId: string;
+  userId: string;
+  title: string;
+  courseName: string;
+  createdAt: string;
+  updatedAt: string;
+  lastTurnAt: number;
+  turns: Array<{
+    id: string;
+    role: 'user' | 'assistant';
+    text: string;
+    timestamp: number;
+    sources?: Array<{
+      title: string;
+      section?: string;
+      snippet?: string;
+    }>;
+  }>;
+  sourceSummaries?: string[];
+}
+
+export async function saveVoiceSessionToFirestore(session: {
+  sessionId: string;
+  title: string;
+  courseName: string;
+  turns: any[];
+  sourceSummaries?: string[];
+}): Promise<string | undefined> {
+  const user = auth.currentUser;
+  if (!user) return undefined;
+
+  const path = `users/${user.uid}/voiceSessions/${session.sessionId}`;
+  try {
+    const data: FirestoreVoiceSession = {
+      sessionId: session.sessionId,
+      userId: user.uid,
+      title: session.title,
+      courseName: session.courseName,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastTurnAt: Date.now(),
+      // Keep bounded turns within Firestore 1MB document limit (last 100 turns max)
+      turns: session.turns.slice(-100),
+      sourceSummaries: session.sourceSummaries || [],
+    };
+    await setDoc(doc(db, 'users', user.uid, 'voiceSessions', session.sessionId), data, { merge: true });
+    return session.sessionId;
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, path);
+  }
+}
+
+export async function getVoiceSessionsFromFirestore(): Promise<FirestoreVoiceSession[]> {
+  const user = auth.currentUser;
+  if (!user) return [];
+
+  const path = `users/${user.uid}/voiceSessions`;
+  try {
+    const q = query(collection(db, 'users', user.uid, 'voiceSessions'), orderBy('lastTurnAt', 'desc'), limit(30));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => d.data() as FirestoreVoiceSession);
+  } catch (err) {
+    handleFirestoreError(err, OperationType.LIST, path);
+    return [];
+  }
+}
+
+export async function deleteVoiceSessionFromFirestore(sessionId: string): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const path = `users/${user.uid}/voiceSessions/${sessionId}`;
+  try {
+    await deleteDoc(doc(db, 'users', user.uid, 'voiceSessions', sessionId));
+  } catch (err) {
+    handleFirestoreError(err, OperationType.DELETE, path);
+  }
+}
+
+export async function renameVoiceSessionInFirestore(sessionId: string, newTitle: string): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const path = `users/${user.uid}/voiceSessions/${sessionId}`;
+  try {
+    await updateDoc(doc(db, 'users', user.uid, 'voiceSessions', sessionId), {
+      title: newTitle,
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    handleFirestoreError(err, OperationType.UPDATE, path);
+  }
+}

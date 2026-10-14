@@ -262,7 +262,7 @@ ${currentModules
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search your Google Drive (e.g., 'Biochem syllabus', 'MCAT', 'Chem 101')..."
+                  placeholder="Search your Google Drive (e.g., 'Distributed Systems', 'Algorithms syllabus', 'Deep Learning')..."
                   className="w-full bg-surface-container pl-10 pr-24 py-2.5 rounded-xl border border-outline-variant text-xs text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/60 transition-colors"
                 />
                 <button

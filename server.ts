@@ -9,6 +9,26 @@ import { localGemmaEngine } from './localGemmaEngine';
 
 dotenv.config();
 
+// ─── Firebase Admin SDK — ID Token Verification ─────────────────────────────
+import { initializeApp, cert, getApps, App } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+
+let firebaseAdminApp: App | null = null;
+try {
+  const saJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (saJson && getApps().length === 0) {
+    const serviceAccount = JSON.parse(saJson);
+    firebaseAdminApp = initializeApp({
+      credential: cert(serviceAccount),
+    });
+    console.log('[Firebase Admin] ✓ Initialized with service account credentials.');
+  } else if (getApps().length > 0) {
+    firebaseAdminApp = getApps()[0];
+  }
+} catch (e: any) {
+  console.warn('[Firebase Admin] ⚠ Initialization skipped (missing FIREBASE_SERVICE_ACCOUNT_JSON or parse error):', e.message);
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -94,6 +114,82 @@ async function generateContentWithFallback(params: {
 
   return null;
 }
+
+// -------------------------------------------------------------
+// Live API Ephemeral Token Provisioning for Native S2S Voice Coach
+// -------------------------------------------------------------
+app.post('/api/voice/live-token', async (req: Request, res: Response) => {
+  try {
+    // ── Firebase ID Token Verification ──────────────────────────────────────
+    const authHeader = req.headers.authorization;
+    let userId = 'anon-dev';
+
+    if (firebaseAdminApp) {
+      // Admin SDK is available — require and verify the Firebase ID token
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          error: 'Authorization header with Firebase ID token is required.',
+        });
+      }
+      const idToken = authHeader.split('Bearer ')[1];
+      try {
+        const decoded = await getAuth(firebaseAdminApp).verifyIdToken(idToken);
+        userId = decoded.uid;
+      } catch (verifyErr: any) {
+        console.warn('[voice/live-token] Token verification failed:', verifyErr.code || verifyErr.message);
+        return res.status(401).json({
+          error: 'Unauthorized: Firebase ID token is invalid or expired. Please sign in again.',
+        });
+      }
+    } else {
+      // Dev fallback: Admin not configured — allow but warn; attempt soft decode for userId
+      console.warn('[voice/live-token] ⚠ Dev mode: Firebase Admin not initialized. Token NOT cryptographically verified.');
+      if (authHeader?.startsWith('Bearer ')) {
+        try {
+          const parts = authHeader.split('Bearer ')[1].split('.');
+          if (parts[1]) {
+            const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+            userId = payload.user_id || payload.sub || 'dev-user';
+          }
+        } catch { /* ignore parse errors */ }
+      }
+    }
+
+    if (!ai) {
+      return res.status(500).json({
+        error: 'Gemini AI is not initialized. Ensure GEMINI_API_KEY is configured in .env',
+      });
+    }
+
+    const liveModel = process.env.GEMINI_LIVE_MODEL || 'gemini-2.0-flash-exp';
+
+    // Provision constrained ephemeral token via Gemini authTokens API
+    let tokenName = '';
+    try {
+      const tokenResult = await (ai as any).authTokens.create({});
+      if (tokenResult?.name) {
+        tokenName = tokenResult.name;
+      }
+    } catch (tokenErr: any) {
+      console.warn('Ephemeral token provisioning fallback:', tokenErr.message);
+    }
+
+    const clientToken = tokenName || process.env.GEMINI_API_KEY;
+
+    return res.json({
+      success: true,
+      token: clientToken,
+      model: liveModel,
+      userId,
+      expiresInSeconds: 1800,
+    });
+  } catch (error: any) {
+    console.error('Failed to issue Live API ephemeral token:', error);
+    return res.status(500).json({
+      error: 'Token provisioning failed: ' + (error.message || 'Unknown error'),
+    });
+  }
+});
 
 // -------------------------------------------------------------
 // 1. API: Analyze Syllabus
@@ -232,7 +328,7 @@ app.post('/api/voice-agent/transcribe', async (req: Request, res: Response) => {
 
 // 2B. Generate Spoken Tutor Audio using gemini-3.8-flash-lite-tts
 app.post('/api/voice-synthesize', async (req: Request, res: Response) => {
-  const { text, voiceName = 'Zephyr', style = 'Encouraging, authoritative medical professor and tutor' } = req.body;
+  const { text, voiceName = 'Puck', style = 'Encouraging, authoritative CS and AI Systems professor and tutor' } = req.body;
   if (!text) {
     return res.status(400).json({ error: 'Text is required for voice synthesis' });
   }

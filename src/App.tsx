@@ -15,6 +15,7 @@ import { Step3Bandwidth } from './components/Step3Bandwidth';
 import { Step4Resources } from './components/Step4Resources';
 import { StudyDashboard } from './components/StudyDashboard';
 import { VoiceRecallQuiz } from './components/VoiceRecallQuiz';
+import { VoiceStudyCoach } from './components/VoiceStudyCoach';
 import { HandwrittenAnalysis } from './components/HandwrittenAnalysis';
 import { GoogleAuthProviderComponent, useGoogleAuth } from './context/GoogleAuthContext';
 import { GoogleDriveModal } from './components/GoogleDriveModal';
@@ -42,6 +43,7 @@ function AppContent() {
       'step4-resources',
       'dashboard',
       'voice-quiz',
+      'voice-coach',
       'handwritten-analysis',
     ];
     return validScreens.includes(hash) ? hash : 'landing';
@@ -163,6 +165,7 @@ function AppContent() {
         'step4-resources',
         'dashboard',
         'voice-quiz',
+        'voice-coach',
         'handwritten-analysis',
       ];
       if (validScreens.includes(hash)) {
@@ -193,7 +196,7 @@ function AppContent() {
       // Save to Firebase Firestore if logged in
       if (user) {
         saveStudyPlanToFirestore({
-          courseName: data.courseName || 'MCAT Foundations Biochem',
+          courseName: data.courseName || 'Distributed Systems & Engineering',
           units: converted,
           milestones: data.milestones,
           pacing: data.pacing,
@@ -281,7 +284,7 @@ function AppContent() {
             targetDate={targetDate}
             targetScore={targetScore}
             retentionMode={retentionMode}
-            courseName={parsedData?.courseName || 'MCAT Foundations Biochem'}
+            courseName={parsedData?.courseName || 'Distributed Systems & Engineering'}
           />
         )}
 
@@ -319,7 +322,7 @@ function AppContent() {
             resources={resources}
             setResources={setResources}
             modules={modules}
-            courseName={parsedData?.courseName || 'MCAT Foundations Biochem'}
+            courseName={parsedData?.courseName || 'Distributed Systems & Engineering'}
           />
         )}
 
@@ -336,11 +339,13 @@ function AppContent() {
           />
         )}
 
-        {currentScreen === 'voice-quiz' && (
-          <VoiceRecallQuiz
+        {(currentScreen === 'voice-quiz' || currentScreen === 'voice-coach') && (
+          <VoiceStudyCoach
             onNavigate={navigateTo}
             modules={modules}
             courseName={parsedData?.courseName || 'CS 3200: Distributed Systems & Engineering'}
+            resources={resources}
+            syllabusText={syllabusText}
           />
         )}
 

@@ -64,7 +64,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       </header>
 
       {/* ================= HERO SECTION ================= */}
-      <section className="relative overflow-hidden pt-16 md:pt-24 pb-20 bg-background bg-grid-mesh">
+      <section className="relative overflow-hidden pt-16 md:pt-24 pb-20 bg-aurora bg-grid-mesh">
         {/* Ambient Gradient Orbs */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] bg-primary/10 rounded-full blur-[140px] pointer-events-none"></div>
         <div className="absolute top-1/3 left-1/4 w-[360px] h-[360px] bg-tertiary/5 rounded-full blur-[120px] pointer-events-none"></div>
@@ -80,14 +80,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               <span className="text-primary font-mono">FSRS Adaptive Algorithm</span>
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-headline font-extrabold tracking-tight text-on-surface leading-[1.1] mb-6">
+            <h1 className="text-4xl md:text-6xl font-headline font-extrabold tracking-tight text-on-surface leading-[1.1] mb-6 hero-headline animate-fade-in-up">
               Turn Your Syllabus Into a{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary-fixed-dim to-tertiary">
                 Smart Study Plan.
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl font-body text-on-surface-variant max-w-2xl mx-auto mb-8 font-normal leading-relaxed">
+            <p className="text-lg md:text-xl font-body text-on-surface-variant max-w-2xl mx-auto mb-8 font-normal leading-relaxed animate-fade-in-up">
               AI-powered planning that adapts to your progress.
             </p>
 
@@ -110,7 +110,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
 
           {/* High-Fidelity Floating Mockup Hero Graphic */}
           <div className="relative max-w-5xl mx-auto mt-10">
-            <div className="rounded-xl border border-outline-variant bg-surface-container/95 p-3 md:p-5 shadow-2xl backdrop-blur-xl glow-violet">
+            <div className="rounded-xl border border-outline-variant bg-surface-container/95 p-3 md:p-5 shadow-2xl backdrop-blur-xl glow-violet glass-card">
               {/* Mockup Window Header */}
               <div className="flex items-center justify-between border-b border-outline-variant pb-3 mb-4 px-2">
                 <div className="flex items-center gap-2">
@@ -119,7 +119,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   <span className="w-3 h-3 rounded-full bg-tertiary/60 border border-tertiary"></span>
                   <span className="text-xs font-mono text-on-surface-variant ml-3 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-xs text-primary">insert_drive_file</span>
-                    BIOCHEM_2025_Final_Syllabus.pdf
+                    CS3200_Distributed_Systems_Syllabus.pdf
                   </span>
                 </div>
                 {/* Live Status Pill */}
@@ -143,30 +143,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                     <div className="space-y-2.5">
                       <div className="p-2.5 rounded bg-surface border border-outline-variant text-xs">
                         <div className="flex justify-between items-center mb-1">
-                          <span className="font-medium text-on-surface">Unit 3: Enzymatic Kinetics</span>
+                          <span className="font-medium text-on-surface">Unit 3: Raft Distributed Consensus</span>
                           <span className="text-[10px] font-mono text-primary">High Yield</span>
                         </div>
-                        <p className="text-[11px] text-on-surface-variant">Michaelis-Menten & Lineweaver-Burk plots.</p>
+                        <p className="text-[11px] text-on-surface-variant">Leader election, log replication, safety invariants & heartbeats.</p>
                         <div className="mt-2 w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
                           <div className="bg-primary h-full w-4/5"></div>
                         </div>
                       </div>
                       <div className="p-2.5 rounded bg-surface border border-outline-variant text-xs">
                         <div className="flex justify-between items-center mb-1">
-                          <span className="font-medium text-on-surface">Unit 4: Oxidative Phosphorylation</span>
+                          <span className="font-medium text-on-surface">Unit 4: Virtual Memory & Page Tables</span>
                           <span className="text-[10px] font-mono text-tertiary">Exam 40%</span>
                         </div>
-                        <p className="text-[11px] text-on-surface-variant">Complexes I-IV, Chemiosmosis & ATP Synthase.</p>
+                        <p className="text-[11px] text-on-surface-variant">Multi-level paging, TLB invalidation & demand paging traps.</p>
                         <div className="mt-2 w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
                           <div className="bg-tertiary h-full w-3/5"></div>
                         </div>
                       </div>
                       <div className="p-2.5 rounded bg-surface border border-outline-variant text-xs opacity-75">
                         <div className="flex justify-between items-center mb-1">
-                          <span className="font-medium text-on-surface">Unit 5: Lipid Metabolism</span>
+                          <span className="font-medium text-on-surface">Unit 5: Two-Phase Locking & 2PC</span>
                           <span className="text-[10px] font-mono text-secondary-fixed">Spaced Day 4</span>
                         </div>
-                        <p className="text-[11px] text-on-surface-variant">Beta-oxidation spiral & Ketogenesis balance.</p>
+                        <p className="text-[11px] text-on-surface-variant">Strict serializability, write-ahead logging (WAL) & atomicity.</p>
                       </div>
                     </div>
                   </div>
@@ -285,7 +285,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       <section className="border-y border-outline-variant bg-surface py-10">
         <div className="max-w-7xl mx-auto px-6 md:px-12 text-center">
           <p className="text-xs md:text-sm font-mono text-on-surface-variant tracking-wider uppercase mb-8">
-            Trusted by 45,000+ students from top medical, law, and engineering programs
+            Trusted by 45,000+ students from top engineering, computer science, and technical university programs
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-75">
             <div className="flex items-center gap-2 text-on-surface font-semibold tracking-tight text-base md:text-lg">
@@ -293,8 +293,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               <span>HARVARD</span>
             </div>
             <div className="flex items-center gap-2 text-on-surface font-semibold tracking-tight text-base md:text-lg">
-              <span className="material-symbols-outlined text-primary text-xl">biotech</span>
-              <span>JOHNS HOPKINS</span>
+              <span className="material-symbols-outlined text-primary text-xl">terminal</span>
+              <span>CARNEGIE MELLON</span>
             </div>
             <div className="flex items-center gap-2 text-on-surface font-semibold tracking-tight text-base md:text-lg">
               <span className="material-symbols-outlined text-primary text-xl">local_library</span>
@@ -305,8 +305,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               <span>MIT</span>
             </div>
             <div className="flex items-center gap-2 text-on-surface font-semibold tracking-tight text-base md:text-lg">
-              <span className="material-symbols-outlined text-primary text-xl">history_edu</span>
-              <span>OXFORD</span>
+              <span className="material-symbols-outlined text-primary text-xl">code</span>
+              <span>BERKELEY</span>
             </div>
           </div>
         </div>
@@ -321,13 +321,46 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               Engineered to eradicate cramming and study fatigue.
             </h2>
             <p className="text-on-surface-variant font-body text-base">
-              Standard study planners treat time as an empty bucket. Synapse models your memory half-life, attention limits, and material difficulty.
+              Standard study planners treat time as an empty bucket. Synapse models your memory half-life, attention limits, and material difficulty with real-time Speech-to-Speech coaching.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Card 1 */}
-            <div className="bg-surface-container rounded-xl border border-outline-variant p-8 flex flex-col justify-between hover:border-primary/40 transition-colors duration-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
+            {/* Card 1: Live S2S Voice Coach */}
+            <div className="glass-card card-hover rounded-xl p-8 flex flex-col justify-between relative overflow-hidden group border-primary/30">
+              <div className="absolute -top-10 -right-10 w-28 h-28 bg-primary/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+              <div>
+                <div className="w-12 h-12 rounded-lg bg-surface-container-highest border border-primary/40 flex items-center justify-center text-primary mb-6 shadow-lg shadow-purple-900/20">
+                  <span className="material-symbols-outlined text-2xl">record_voice_over</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-[10px] font-mono text-primary font-semibold uppercase mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+                  Native S2S Live API
+                </div>
+                <h3 className="text-xl font-headline font-semibold text-on-surface mb-3 tracking-tight">
+                  Oral Study Coach & RAG
+                </h3>
+                <p className="text-sm font-body text-on-surface-variant leading-relaxed">
+                  Have fluent, uninterrupted voice conversations with an academic AI lecturer. Grounded in real-time in your syllabus documents via local BM25 search.
+                </p>
+              </div>
+              <div className="mt-8 pt-4 border-t border-outline-variant/60 flex items-center justify-between">
+                <span className="text-xs font-mono text-primary flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">mic</span>
+                  <span>16kHz PCM In • 24kHz Out</span>
+                </span>
+                <button
+                  onClick={() => onNavigate('voice-coach')}
+                  className="text-xs font-mono text-primary-fixed hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Launch Coach</span>
+                  <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Card 2: Syllabus Ingestion */}
+            <div className="glass-card card-hover rounded-xl p-8 flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 rounded-lg bg-surface-container-highest border border-outline-variant flex items-center justify-center text-primary mb-6">
                   <span className="material-symbols-outlined text-2xl">document_scanner</span>
@@ -336,17 +369,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   Instant Syllabus Ingestion
                 </h3>
                 <p className="text-sm font-body text-on-surface-variant leading-relaxed">
-                  Drag & drop any syllabus or PDF; AI extracts high-yield topics, deadlines, and weightings in seconds.
+                  Drag & drop any syllabus or PDF; AI extracts high-yield topics, prerequisites, and grading schemes in seconds.
                 </p>
               </div>
               <div className="mt-8 pt-4 border-t border-outline-variant/60 flex items-center gap-2 text-xs font-mono text-tertiary">
                 <span className="material-symbols-outlined text-xs">check</span>
-                <span>Handles multi-course syllabi and nested tables</span>
+                <span>Multi-course parsing & topic indexing</span>
               </div>
             </div>
 
-            {/* Card 2 */}
-            <div className="bg-surface-container rounded-xl border border-outline-variant p-8 flex flex-col justify-between hover:border-primary/40 transition-colors duration-200 relative overflow-hidden">
+            {/* Card 3: Adaptive Rescheduling */}
+            <div className="glass-card card-hover rounded-xl p-8 flex flex-col justify-between relative overflow-hidden">
               <div className="absolute -top-12 -right-12 w-28 h-28 bg-primary/10 rounded-full blur-2xl"></div>
               <div>
                 <div className="w-12 h-12 rounded-lg bg-surface-container-highest border border-outline-variant flex items-center justify-center text-primary mb-6">
@@ -361,12 +394,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               </div>
               <div className="mt-8 pt-4 border-t border-outline-variant/60 flex items-center gap-2 text-xs font-mono text-primary">
                 <span className="material-symbols-outlined text-xs">bolt</span>
-                <span>Zero manual calendar dragging or recalculation</span>
+                <span>Zero manual calendar dragging</span>
               </div>
             </div>
 
-            {/* Card 3 */}
-            <div className="bg-surface-container rounded-xl border border-outline-variant p-8 flex flex-col justify-between hover:border-primary/40 transition-colors duration-200">
+            {/* Card 4: Spaced Repetition */}
+            <div className="glass-card card-hover rounded-xl p-8 flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 rounded-lg bg-surface-container-highest border border-outline-variant flex items-center justify-center text-tertiary mb-6">
                   <span className="material-symbols-outlined text-2xl">psychology</span>
@@ -375,12 +408,68 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   Spaced Repetition & Cognitive Guard
                 </h3>
                 <p className="text-sm font-body text-on-surface-variant leading-relaxed">
-                  Integrated memory decay algorithms (FSRS) and cognitive load monitors ensure zero burnout and peak recall.
+                  Integrated memory decay algorithms (FSRS) and cognitive load monitors ensure zero burnout and peak recall on exam day.
                 </p>
               </div>
               <div className="mt-8 pt-4 border-t border-outline-variant/60 flex items-center gap-2 text-xs font-mono text-tertiary">
                 <span className="material-symbols-outlined text-xs">shield</span>
-                <span>Prevents &gt;4 hr un-spaced cognitive blocks</span>
+                <span>Prevents &gt;4 hr un-spaced blocks</span>
+              </div>
+            </div>
+
+            {/* Card 5: Handwritten Notes Analysis */}
+            <div className="glass-card card-hover rounded-xl p-8 flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-lg bg-surface-container-highest border border-outline-variant flex items-center justify-center text-secondary mb-6">
+                  <span className="material-symbols-outlined text-2xl">draw</span>
+                </div>
+                <h3 className="text-xl font-headline font-semibold text-on-surface mb-3 tracking-tight">
+                  Handwritten Notes AI Diagnostic
+                </h3>
+                <p className="text-sm font-body text-on-surface-variant leading-relaxed">
+                  Snap photos of notebook pages, derivations, and circuit sketches. AI verifies mathematical correctness and generates LaTeX flashcards.
+                </p>
+              </div>
+              <div className="mt-8 pt-4 border-t border-outline-variant/60 flex items-center justify-between">
+                <span className="text-xs font-mono text-secondary flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">camera_alt</span>
+                  <span>Vision 2.0 Ingestion</span>
+                </span>
+                <button
+                  onClick={() => onNavigate('handwritten-analysis')}
+                  className="text-xs font-mono text-secondary hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Scan Notes</span>
+                  <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Card 6: Interactive Quiz & Recall */}
+            <div className="glass-card card-hover rounded-xl p-8 flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-lg bg-surface-container-highest border border-outline-variant flex items-center justify-center text-primary mb-6">
+                  <span className="material-symbols-outlined text-2xl">quiz</span>
+                </div>
+                <h3 className="text-xl font-headline font-semibold text-on-surface mb-3 tracking-tight">
+                  Oral Evaluation & Recall Drill
+                </h3>
+                <p className="text-sm font-body text-on-surface-variant leading-relaxed">
+                  Test your active recall with audio evaluations that score accuracy, concept completeness, and clarity on challenging problem sets.
+                </p>
+              </div>
+              <div className="mt-8 pt-4 border-t border-outline-variant/60 flex items-center justify-between">
+                <span className="text-xs font-mono text-primary flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">headphones</span>
+                  <span>Audio Feedback</span>
+                </span>
+                <button
+                  onClick={() => onNavigate('voice-quiz')}
+                  className="text-xs font-mono text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Practice Quiz</span>
+                  <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                </button>
               </div>
             </div>
           </div>
@@ -451,7 +540,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                 Study, Sync, & Watch Your Schedule Self-Heal
               </h3>
               <p className="text-sm text-on-surface-variant leading-relaxed font-body">
-                Tick off units as you learn. Missed a clinical rotation or emergency? Synapse calculates optimal buffer utilization with zero penalty or panic.
+                Tick off units as you learn. Missed a lab session, hackathon sprint, or exam review? Synapse calculates optimal buffer utilization with zero penalty or panic.
               </p>
               <div className="mt-6 p-3 rounded bg-surface border border-outline-variant text-xs font-mono text-tertiary">
                 Continuous: Real-time re-balance engine
@@ -548,7 +637,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               Proven on the world’s toughest exams.
             </h2>
             <p className="text-on-surface-variant font-body text-base">
-              From first-year pre-med to grueling Bar qualifications, here is how candidates locked in their target scores.
+              From complex CS algorithms to grueling engineering qualifications, here is how candidates locked in their target scores.
             </p>
           </div>
 
@@ -564,13 +653,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   ))}
                 </div>
                 <p className="text-sm font-body text-on-surface leading-relaxed mb-6">
-                  "I uploaded 4 different pre-med syllabi alongside my Kaplan MCAT book schedule. Synapse unified the chaos into an undeniable daily roadmap. Scored 523 (100th percentile)."
+                  "I uploaded my Distributed Systems and Algorithms syllabi alongside CLRS and MIT 6.824 lectures. Synapse calibrated the entire roadmap with spaced retrieval. Scored in the 99.8th percentile on the engineering benchmark."
                 </p>
               </div>
               <div className="pt-4 border-t border-outline-variant flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-on-surface">Dr. Elena Rostova</div>
-                  <div className="text-xs font-mono text-on-surface-variant">MCAT 523 • Johns Hopkins Med</div>
+                  <div className="text-sm font-semibold text-on-surface">Elena Rostova</div>
+                  <div className="text-xs font-mono text-on-surface-variant">GATE CS/DA Rank 12 • Systems Track</div>
                 </div>
                 <span className="text-[10px] font-mono text-tertiary px-2 py-0.5 rounded bg-tertiary-container">VERIFIED</span>
               </div>
@@ -587,13 +676,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   ))}
                 </div>
                 <p className="text-sm font-body text-on-surface leading-relaxed mb-6">
-                  "The self-healing schedule was my lifeline during hospital rotations. When an ICU shift ran 4 hours over, Synapse effortlessly redistributed my cardio modules without causing a weekend panic."
+                  "The self-healing schedule was my lifeline while balancing production engineering on-call rotations. When a deployment ran over, Synapse effortlessly redistributed my deep learning modules without weekend panic."
                 </p>
               </div>
               <div className="pt-4 border-t border-outline-variant flex items-center justify-between">
                 <div>
                   <div className="text-sm font-semibold text-on-surface">Marcus Vance</div>
-                  <div className="text-xs font-mono text-on-surface-variant">USMLE Step 1 Pass • Harvard Medical</div>
+                  <div className="text-xs font-mono text-on-surface-variant">ML Systems Engineer • Stanford AI Lab</div>
                 </div>
                 <span className="text-[10px] font-mono text-tertiary px-2 py-0.5 rounded bg-tertiary-container">VERIFIED</span>
               </div>

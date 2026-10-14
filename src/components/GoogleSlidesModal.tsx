@@ -92,7 +92,7 @@ export const GoogleSlidesModal: React.FC<GoogleSlidesModalProps> = ({
     setShowConfirmExport(false);
 
     try {
-      const title = `MCAT & Biochem Mastery Plan (${new Date().toLocaleDateString()})`;
+      const title = `Curriculum Mastery & Architecture Roadmap (${new Date().toLocaleDateString()})`;
       const result = await createStudyPlanSlides(
         accessToken,
         title,

@@ -55,7 +55,7 @@
     },
     "HandwrittenWork": {
       "title": "HandwrittenWork",
-      "description": "Mechanistic rubric grading for handwritten chemistry and biology calculations",
+      "description": "Mechanistic rubric grading for handwritten system architectures, derivations, and algorithmic calculations",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
