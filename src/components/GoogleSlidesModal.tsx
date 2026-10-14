@@ -7,6 +7,7 @@ import {
   createStudyPlanSlides,
   GoogleSlidesPresentation,
 } from '../services/googleSlides';
+import { SLIDES_SCOPES } from '../services/googleAuth';
 import {
   X,
   Presentation,
@@ -38,7 +39,7 @@ export const GoogleSlidesModal: React.FC<GoogleSlidesModalProps> = ({
   targetDate,
   targetScore,
 }) => {
-  const { user, accessToken, signIn, isSigningIn } = useGoogleAuth();
+  const { user, accessToken, signIn, isSigningIn, requestScope } = useGoogleAuth();
   const [presentations, setPresentations] = useState<GoogleSlidesPresentation[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -156,12 +157,12 @@ export const GoogleSlidesModal: React.FC<GoogleSlidesModalProps> = ({
                 </p>
               </div>
               <button
-                onClick={signIn}
+                onClick={() => requestScope(SLIDES_SCOPES)}
                 disabled={isSigningIn}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs shadow-lg shadow-amber-900/30 transition-all active:scale-95 cursor-pointer"
               >
                 {isSigningIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <Presentation className="w-4 h-4" />}
-                Sign in with Google to Connect Slides
+                Authorize Google Slides Access
               </button>
             </div>
           ) : (

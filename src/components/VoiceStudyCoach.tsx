@@ -115,8 +115,6 @@ export const VoiceStudyCoach: React.FC<VoiceStudyCoachProps> = ({
 
   // Audio Telemetry & Live Session refs
   const liveSessionRef = useRef<GeminiLiveSession | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const animFrameRef = useRef<number | null>(null);
   const transcriptBottomRef = useRef<HTMLDivElement | null>(null);
   const [voiceName, setVoiceName] = useState<VoiceName>('Puck');
   const [showSettings, setShowSettings] = useState(false);
@@ -195,70 +193,9 @@ export const VoiceStudyCoach: React.FC<VoiceStudyCoachProps> = ({
     }
   }, [turns, sessionId, sessionTitle, courseName, user, modules]);
 
-  // Canvas Audio Visualizer
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const renderWaveform = () => {
-      animFrameRef.current = requestAnimationFrame(renderWaveform);
-      const width = canvas.width;
-      const height = canvas.height;
-      ctx.clearRect(0, 0, width, height);
-
-      const activeSession = liveSessionRef.current;
-      const analyser =
-        sessionStatus === 'speaking'
-          ? activeSession?.getPlayerAnalyser()
-          : activeSession?.getRecorderAnalyser();
-
-      if (analyser && (sessionStatus === 'speaking' || sessionStatus === 'listening')) {
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-        analyser.getByteFrequencyData(dataArray);
-
-        const barWidth = (width / bufferLength) * 2.5;
-        let x = 0;
-
-        for (let i = 0; i < bufferLength; i++) {
-          const barHeight = (dataArray[i] / 255) * height * 0.85;
-
-          if (sessionStatus === 'speaking') {
-            // Purple gradient for Coach
-            ctx.fillStyle = `rgba(167, 139, 250, ${Math.max(0.25, dataArray[i] / 255)})`;
-          } else {
-            // Emerald/Cyan gradient for Student
-            ctx.fillStyle = `rgba(52, 211, 153, ${Math.max(0.25, dataArray[i] / 255)})`;
-          }
-
-          ctx.fillRect(x, height - barHeight, barWidth, barHeight);
-          x += barWidth + 1.5;
-        }
-      } else {
-        // Idle gentle pulse line
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(113, 113, 122, 0.3)';
-        ctx.lineWidth = 1.5;
-        const time = Date.now() / 600;
-        ctx.moveTo(0, height / 2);
-        for (let x = 0; x < width; x++) {
-          const y = height / 2 + Math.sin(x * 0.04 + time) * 3;
-          ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-      }
-    };
-
-    renderWaveform();
-
-    return () => {
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-      }
-    };
-  }, [sessionStatus]);
+  // Voice activity indicator state
+  const isSpeaking = sessionStatus === 'speaking';
+  const isListening = sessionStatus === 'listening';
 
   // Connect to Gemini Live S2S
   const handleStartSession = async (priorContextTurns?: VoiceTurn[]) => {
@@ -731,14 +668,31 @@ Speak naturally in fluent, high-fidelity conversational audio with scholarly war
               </div>
             </div>
 
-            {/* Central Oscilloscope / Waveform Canvas */}
+            {/* Pure CSS Audio Equalizer Waveform */}
             <div className="w-full flex flex-col items-center justify-center relative py-2 z-10">
-              <canvas
-                ref={canvasRef}
-                width={360}
-                height={90}
-                className="w-full max-w-[340px] h-20 rounded-xl bg-surface-container-lowest/80 border border-outline-variant/60"
-              />
+              <div className="w-full max-w-[340px] h-20 rounded-xl bg-surface-container-lowest/80 border border-outline-variant/60 flex items-center justify-center gap-1.5 px-4 overflow-hidden">
+                {Array.from({ length: 24 }).map((_, i) => {
+                  const active = isSpeaking || isListening;
+                  const delay = (i % 6) * 0.12;
+                  const barColor = isSpeaking
+                    ? 'bg-gradient-to-t from-purple-500 to-indigo-400 shadow-[0_0_8px_rgba(167,139,250,0.5)]'
+                    : isListening
+                    ? 'bg-gradient-to-t from-emerald-500 to-cyan-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]'
+                    : 'bg-zinc-700/40';
+                  return (
+                    <div
+                      key={i}
+                      className={`w-1.5 rounded-full transition-all duration-300 ${barColor}`}
+                      style={{
+                        height: active
+                          ? `${20 + Math.abs(Math.sin(i * 0.6)) * 65}%`
+                          : '10%',
+                        animation: active ? `pulse 1.1s infinite ease-in-out ${delay}s` : 'none',
+                      }}
+                    />
+                  );
+                })}
+              </div>
               <p className="text-xs font-mono text-zinc-400 text-center mt-2.5 max-w-xs leading-relaxed">
                 {statusDetail}
               </p>

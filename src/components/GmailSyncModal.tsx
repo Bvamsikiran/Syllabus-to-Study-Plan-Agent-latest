@@ -5,6 +5,7 @@ import {
   sendEmailViaGmail,
   GmailEmailPreview,
 } from '../services/googleGmail';
+import { GMAIL_SCOPES } from '../services/googleAuth';
 import {
   X,
   Mail,
@@ -36,7 +37,7 @@ export const GmailSyncModal: React.FC<GmailSyncModalProps> = ({
   targetDate,
   targetScore,
 }) => {
-  const { user, accessToken, signIn, isSigningIn } = useGoogleAuth();
+  const { user, accessToken, signIn, isSigningIn, requestScope } = useGoogleAuth();
   const [activeTab, setActiveTab] = useState<'send' | 'scan'>('send');
   const [recipient, setRecipient] = useState<string>('');
   const [subject, setSubject] = useState<string>('Synapse AI — Your Personalized Study Schedule & Milestones');
@@ -197,12 +198,12 @@ export const GmailSyncModal: React.FC<GmailSyncModalProps> = ({
                 </p>
               </div>
               <button
-                onClick={signIn}
+                onClick={() => requestScope(GMAIL_SCOPES)}
                 disabled={isSigningIn}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs shadow-lg shadow-sky-900/30 transition-all active:scale-95"
               >
                 {isSigningIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                Sign in with Google to Connect Gmail
+                Authorize Gmail Access
               </button>
             </div>
           ) : activeTab === 'send' ? (

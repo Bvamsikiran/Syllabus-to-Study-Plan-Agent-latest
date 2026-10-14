@@ -322,7 +322,7 @@ export const StudyDashboard: React.FC<StudyDashboardProps> = ({
         </div>
       </div>
 
-      {/* THREE-COLUMN DASHBOARD CANVAS */}
+      {/* THREE-COLUMN DASHBOARD GRID */}
       <main className="flex-1 w-full max-w-[1920px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* ================= COLUMN A: LEFT SIDEBAR ================= */}
         <section className="lg:col-span-3 flex flex-col gap-4">
@@ -714,10 +714,10 @@ export const StudyDashboard: React.FC<StudyDashboardProps> = ({
                           {defaultModule?.reference || 'Syllabus Assigned Resource'}
                         </span>
                         <button
-                          onClick={() => onNavigate('handwritten-analysis')}
+                          onClick={() => onNavigate('ai-tutor')}
                           className="px-2.5 py-1 rounded-md bg-surface-variant hover:bg-surface-container-high border border-outline-variant text-[11px] text-tertiary flex items-center gap-1.5 font-mono cursor-pointer"
                         >
-                          <span className="material-symbols-outlined text-xs">draw</span> Mechanism Practice
+                          <span className="material-symbols-outlined text-xs">neurology</span> AI Reasoning Tutor
                         </button>
                         <button
                           onClick={() => onNavigate('voice-coach')}

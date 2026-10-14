@@ -1,7 +1,7 @@
 /**
  * Firestore Service for Synapse AI
- * Implements persistent data models for User Profiles, Study Plans, Quiz Results, and Handwritten Analyses
- * strictly conforming to firebase-blueprint.json schema and security standards.
+ * Implements persistent data models for User Profiles, Study Plans, Quiz Results,
+ * AI Tutor Conversations, and Voice Sessions strictly conforming to security standards.
  */
 
 import {
@@ -12,13 +12,12 @@ import {
   deleteDoc,
   collection,
   getDocs,
-  getDocFromServer,
   query,
   orderBy,
   limit,
 } from 'firebase/firestore';
 import { db, auth } from './googleAuth';
-import { SyllabusModule } from '../types';
+import { SyllabusModule, AITutorConversation, AITutorMessage, GroundedSource } from '../types';
 
 export enum OperationType {
   CREATE = 'create',
@@ -29,59 +28,48 @@ export enum OperationType {
   WRITE = 'write',
 }
 
-export interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId?: string | null;
-    email?: string | null;
-    emailVerified?: boolean | null;
-    isAnonymous?: boolean | null;
-    tenantId?: string | null;
-    providerInfo?: {
-      providerId?: string | null;
-      email?: string | null;
-    }[];
-  };
+export class FirestoreServiceError extends Error {
+  public operationType: OperationType;
+  public path: string | null;
+  public code?: string;
+
+  constructor(message: string, operationType: OperationType, path: string | null, code?: string) {
+    super(message);
+    this.name = 'FirestoreServiceError';
+    this.operationType = operationType;
+    this.path = path;
+    this.code = code;
+  }
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null): never {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo:
-        auth.currentUser?.providerData?.map((provider) => ({
-          providerId: provider.providerId,
-          email: provider.email,
-        })) || [],
-    },
-    operationType,
-    path,
-  };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  const message = error instanceof Error ? error.message : String(error);
+  const code = (error as any)?.code;
+
+  console.warn(`[Firestore] ${operationType.toUpperCase()} on ${path || 'unknown'} failed: ${message}`);
+  throw new FirestoreServiceError(message, operationType, path, code);
 }
 
 /**
- * Validate connection to Firestore on boot
+ * Validate connection to Firestore on boot safely without calling forbidden documents
  */
 export async function testFirestoreConnection(): Promise<boolean> {
-  const testPath = 'test/connection';
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-    return true;
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn('Firestore offline or network constrained. Checking configuration.');
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
       return false;
     }
-    // Permission denied on test/connection is expected since default deny catches it
+    // If a user is logged in, verify read access on their own profile doc
+    const user = auth.currentUser;
+    if (user) {
+      await getDoc(doc(db, 'users', user.uid));
+    }
+    return true;
+  } catch (err: any) {
+    // Graceful check: network errors vs unauthenticated states
+    if (err?.code === 'unavailable' || err?.message?.includes('offline')) {
+      console.warn('[Firestore] Client is offline or Firestore service unavailable.');
+      return false;
+    }
     return true;
   }
 }
@@ -115,8 +103,8 @@ export async function saveUserProfile(data: Partial<UserProfileData>): Promise<v
         uid: user.uid,
         email: user.email || '',
         displayName: user.displayName || 'Synapse Scholar',
-        targetDate: data.targetDate || '2025-11-28',
-        targetScore: data.targetScore || 518,
+        targetDate: data.targetDate || '2026-02-07',
+        targetScore: data.targetScore || 85,
         retentionMode: data.retentionMode || 'aggressive',
         createdAt: now,
         updatedAt: now,
@@ -178,11 +166,23 @@ export async function saveStudyPlanToFirestore(plan: {
   generatedSchedule?: any;
 }): Promise<string> {
   const user = auth.currentUser;
-  if (!user) throw new Error('User must be authenticated to save study plan to cloud');
-
   const planId = plan.id || `plan_${Date.now()}`;
-  const path = `users/${user.uid}/studyPlans/${planId}`;
 
+  // If user is not logged in, persist to localStorage for local reliability
+  if (!user) {
+    try {
+      localStorage.setItem('synapse_local_study_plan', JSON.stringify({
+        ...plan,
+        id: planId,
+        updatedAt: new Date().toISOString(),
+      }));
+    } catch {
+      // quota safe
+    }
+    return planId;
+  }
+
+  const path = `users/${user.uid}/studyPlans/${planId}`;
   try {
     const now = new Date().toISOString();
     const docData: FirestoreStudyPlan = {
@@ -190,10 +190,10 @@ export async function saveStudyPlanToFirestore(plan: {
       userId: user.uid,
       courseName: plan.courseName,
       modulesCount: plan.units.length,
-      confidence: plan.confidence || 99.4,
+      confidence: plan.confidence || 98.6,
       units: plan.units,
       milestones: plan.milestones || [],
-      pacing: plan.pacing || { recommendedHoursPerDay: 3.4, dailyCardVolume: 85 },
+      pacing: plan.pacing || { recommendedHoursPerDay: 3.5, dailyCardVolume: 50 },
       scheduleSlots: plan.scheduleSlots || null,
       generatedSchedule: plan.generatedSchedule || null,
       createdAt: now,
@@ -203,13 +203,21 @@ export async function saveStudyPlanToFirestore(plan: {
     await setDoc(doc(db, 'users', user.uid, 'studyPlans', planId), docData);
     return planId;
   } catch (err) {
-    handleFirestoreError(err, OperationType.WRITE, path);
+    // If permission or network issue, fallback to localStorage without crashing
+    console.warn('[Firestore] Failed to save study plan to cloud, persisting locally:', err);
+    try {
+      localStorage.setItem('synapse_local_study_plan', JSON.stringify(plan));
+    } catch { /* ignore */ }
+    return planId;
   }
 }
 
 export async function getStudyPlansFromFirestore(): Promise<FirestoreStudyPlan[]> {
   const user = auth.currentUser;
-  if (!user) return [];
+  if (!user) {
+    const local = localStorage.getItem('synapse_local_study_plan');
+    return local ? [JSON.parse(local)] : [];
+  }
 
   const path = `users/${user.uid}/studyPlans`;
   try {
@@ -217,158 +225,108 @@ export async function getStudyPlansFromFirestore(): Promise<FirestoreStudyPlan[]
     const snap = await getDocs(q);
     return snap.docs.map((d) => d.data() as FirestoreStudyPlan);
   } catch (err) {
-    handleFirestoreError(err, OperationType.LIST, path);
+    console.warn('[Firestore] List study plans failed, returning local backup:', err);
+    const local = localStorage.getItem('synapse_local_study_plan');
+    return local ? [JSON.parse(local)] : [];
   }
 }
 
 export async function getLatestStudyPlanFromFirestore(): Promise<FirestoreStudyPlan | null> {
-  const user = auth.currentUser;
-  if (!user) return null;
+  const plans = await getStudyPlansFromFirestore();
+  return plans.length > 0 ? plans[0] : null;
+}
 
-  const path = `users/${user.uid}/studyPlans`;
+// -------------------------------------------------------------
+// 3. AI Tutor Conversation Persistence
+// -------------------------------------------------------------
+export async function saveAITutorConversationToFirestore(
+  conv: AITutorConversation
+): Promise<string> {
+  const user = auth.currentUser;
+  const convId = conv.id;
+
+  // Local storage cache
   try {
-    const q = query(collection(db, 'users', user.uid, 'studyPlans'), orderBy('updatedAt', 'desc'), limit(1));
-    const snap = await getDocs(q);
-    if (!snap.empty) {
-      return snap.docs[0].data() as FirestoreStudyPlan;
+    const raw = localStorage.getItem('synapse_tutor_convs');
+    const map = raw ? JSON.parse(raw) : {};
+    map[convId] = conv;
+    localStorage.setItem('synapse_tutor_convs', JSON.stringify(map));
+  } catch { /* quota safe */ }
+
+  if (!user) return convId;
+
+  const path = `users/${user.uid}/tutorConversations/${convId}`;
+  try {
+    const docData = {
+      ...conv,
+      userId: user.uid,
+      updatedAt: Date.now(),
+      // Cap messages to avoid document size limit
+      messages: conv.messages.slice(-50),
+    };
+    await setDoc(doc(db, 'users', user.uid, 'tutorConversations', convId), docData, { merge: true });
+    return convId;
+  } catch (err) {
+    console.warn('[Firestore] Saving AI tutor conversation to cloud failed, saved locally:', err);
+    return convId;
+  }
+}
+
+export async function getAITutorConversationsFromFirestore(): Promise<AITutorConversation[]> {
+  const user = auth.currentUser;
+
+  // Check local cache first
+  let localConvs: AITutorConversation[] = [];
+  try {
+    const raw = localStorage.getItem('synapse_tutor_convs');
+    if (raw) {
+      localConvs = Object.values(JSON.parse(raw));
     }
-    return null;
-  } catch (err) {
-    handleFirestoreError(err, OperationType.LIST, path);
+  } catch { /* ignore */ }
+
+  if (!user) {
+    return localConvs.sort((a, b) => b.updatedAt - a.updatedAt);
   }
-}
 
-// -------------------------------------------------------------
-// 3. Voice Quiz Result Persistence
-// -------------------------------------------------------------
-export interface FirestoreQuizResult {
-  id: string;
-  userId: string;
-  questionTitle: string;
-  transcript: string;
-  score: number;
-  retentionDelta: string;
-  correctInsights: string[];
-  spokenSummary?: string;
-  misconception?: any;
-  createdAt: string;
-}
-
-export async function saveQuizResultToFirestore(result: {
-  questionTitle: string;
-  transcript: string;
-  score: number;
-  retentionDelta: string;
-  correctInsights: string[];
-  spokenSummary?: string;
-  misconception?: any;
-}): Promise<string> {
-  const user = auth.currentUser;
-  if (!user) return '';
-
-  const id = `quiz_${Date.now()}`;
-  const path = `users/${user.uid}/quizResults/${id}`;
-
+  const path = `users/${user.uid}/tutorConversations`;
   try {
-    const data: FirestoreQuizResult = {
-      id,
-      userId: user.uid,
-      questionTitle: result.questionTitle,
-      transcript: result.transcript,
-      score: result.score,
-      retentionDelta: result.retentionDelta,
-      correctInsights: result.correctInsights,
-      spokenSummary: result.spokenSummary,
-      misconception: result.misconception,
-      createdAt: new Date().toISOString(),
-    };
-    await setDoc(doc(db, 'users', user.uid, 'quizResults', id), data);
-    return id;
-  } catch (err) {
-    handleFirestoreError(err, OperationType.CREATE, path);
-  }
-}
-
-export async function getQuizResultsFromFirestore(): Promise<FirestoreQuizResult[]> {
-  const user = auth.currentUser;
-  if (!user) return [];
-
-  const path = `users/${user.uid}/quizResults`;
-  try {
-    const q = query(collection(db, 'users', user.uid, 'quizResults'), orderBy('createdAt', 'desc'), limit(20));
+    const q = query(
+      collection(db, 'users', user.uid, 'tutorConversations'),
+      orderBy('updatedAt', 'desc'),
+      limit(25)
+    );
     const snap = await getDocs(q);
-    return snap.docs.map((d) => d.data() as FirestoreQuizResult);
+    const cloudConvs = snap.docs.map((d) => d.data() as AITutorConversation);
+    return cloudConvs.length > 0 ? cloudConvs : localConvs;
   } catch (err) {
-    handleFirestoreError(err, OperationType.LIST, path);
+    console.warn('[Firestore] Failed to fetch cloud tutor conversations, using local cache:', err);
+    return localConvs;
+  }
+}
+
+export async function deleteAITutorConversationFromFirestore(convId: string): Promise<void> {
+  try {
+    const raw = localStorage.getItem('synapse_tutor_convs');
+    if (raw) {
+      const map = JSON.parse(raw);
+      delete map[convId];
+      localStorage.setItem('synapse_tutor_convs', JSON.stringify(map));
+    }
+  } catch { /* ignore */ }
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  try {
+    await deleteDoc(doc(db, 'users', user.uid, 'tutorConversations', convId));
+  } catch (err) {
+    console.warn('[Firestore] Delete tutor conversation failed:', err);
   }
 }
 
 // -------------------------------------------------------------
-// 4. Handwritten Analysis Work Persistence
+// 4. Voice Study Coach Session Persistence
 // -------------------------------------------------------------
-export interface FirestoreHandwrittenWork {
-  id: string;
-  userId: string;
-  promptContext: string;
-  score: number;
-  maxScore: number;
-  rubricMet: string;
-  diagnosticSummary?: string;
-  pacing?: string;
-  pins: any[];
-  createdAt: string;
-}
-
-export async function saveHandwrittenWorkToFirestore(work: {
-  promptContext: string;
-  score: number;
-  maxScore?: number;
-  rubricMet?: string;
-  diagnosticSummary?: string;
-  pacing?: string;
-  pins: any[];
-}): Promise<string> {
-  const user = auth.currentUser;
-  if (!user) return '';
-
-  const id = `hw_${Date.now()}`;
-  const path = `users/${user.uid}/handwrittenWork/${id}`;
-
-  try {
-    const data: FirestoreHandwrittenWork = {
-      id,
-      userId: user.uid,
-      promptContext: work.promptContext,
-      score: work.score,
-      maxScore: work.maxScore || 10,
-      rubricMet: work.rubricMet || 'All Criteria Evaluated',
-      diagnosticSummary: work.diagnosticSummary,
-      pacing: work.pacing,
-      pins: work.pins,
-      createdAt: new Date().toISOString(),
-    };
-    await setDoc(doc(db, 'users', user.uid, 'handwrittenWork', id), data);
-    return id;
-  } catch (err) {
-    handleFirestoreError(err, OperationType.CREATE, path);
-  }
-}
-
-export async function getHandwrittenWorksFromFirestore(): Promise<FirestoreHandwrittenWork[]> {
-  const user = auth.currentUser;
-  if (!user) return [];
-
-  const path = `users/${user.uid}/handwrittenWork`;
-  try {
-    const q = query(collection(db, 'users', user.uid, 'handwrittenWork'), orderBy('createdAt', 'desc'), limit(20));
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => d.data() as FirestoreHandwrittenWork);
-  } catch (err) {
-    handleFirestoreError(err, OperationType.LIST, path);
-  }
-}
-
-// 5. Voice Study Coach Session & Conversation Memory Persistence
 export interface FirestoreVoiceSession {
   sessionId: string;
   userId: string;
@@ -382,11 +340,8 @@ export interface FirestoreVoiceSession {
     role: 'user' | 'assistant';
     text: string;
     timestamp: number;
-    sources?: Array<{
-      title: string;
-      section?: string;
-      snippet?: string;
-    }>;
+    sources?: GroundedSource[];
+    thinking?: string;
   }>;
   sourceSummaries?: string[];
 }
@@ -399,7 +354,20 @@ export async function saveVoiceSessionToFirestore(session: {
   sourceSummaries?: string[];
 }): Promise<string | undefined> {
   const user = auth.currentUser;
-  if (!user) return undefined;
+
+  // Always cache locally
+  try {
+    const raw = localStorage.getItem('synapse_voice_sessions');
+    const map = raw ? JSON.parse(raw) : {};
+    map[session.sessionId] = {
+      ...session,
+      userId: user?.uid || 'local-user',
+      lastTurnAt: Date.now(),
+    };
+    localStorage.setItem('synapse_voice_sessions', JSON.stringify(map));
+  } catch { /* quota safe */ }
+
+  if (!user) return session.sessionId;
 
   const path = `users/${user.uid}/voiceSessions/${session.sessionId}`;
   try {
@@ -411,55 +379,110 @@ export async function saveVoiceSessionToFirestore(session: {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       lastTurnAt: Date.now(),
-      // Keep bounded turns within Firestore 1MB document limit (last 100 turns max)
-      turns: session.turns.slice(-100),
+      turns: session.turns.slice(-60),
       sourceSummaries: session.sourceSummaries || [],
     };
     await setDoc(doc(db, 'users', user.uid, 'voiceSessions', session.sessionId), data, { merge: true });
     return session.sessionId;
   } catch (err) {
-    handleFirestoreError(err, OperationType.WRITE, path);
+    console.warn('[Firestore] Failed to save voice session to cloud, cached locally:', err);
+    return session.sessionId;
   }
 }
 
 export async function getVoiceSessionsFromFirestore(): Promise<FirestoreVoiceSession[]> {
   const user = auth.currentUser;
-  if (!user) return [];
+
+  let localSessions: FirestoreVoiceSession[] = [];
+  try {
+    const raw = localStorage.getItem('synapse_voice_sessions');
+    if (raw) {
+      localSessions = Object.values(JSON.parse(raw));
+    }
+  } catch { /* ignore */ }
+
+  if (!user) {
+    return localSessions.sort((a, b) => b.lastTurnAt - a.lastTurnAt);
+  }
 
   const path = `users/${user.uid}/voiceSessions`;
   try {
-    const q = query(collection(db, 'users', user.uid, 'voiceSessions'), orderBy('lastTurnAt', 'desc'), limit(30));
+    const q = query(
+      collection(db, 'users', user.uid, 'voiceSessions'),
+      orderBy('lastTurnAt', 'desc'),
+      limit(25)
+    );
     const snap = await getDocs(q);
-    return snap.docs.map((d) => d.data() as FirestoreVoiceSession);
+    const cloudSessions = snap.docs.map((d) => d.data() as FirestoreVoiceSession);
+    return cloudSessions.length > 0 ? cloudSessions : localSessions;
   } catch (err) {
-    handleFirestoreError(err, OperationType.LIST, path);
-    return [];
+    console.warn('[Firestore] Failed to fetch cloud voice sessions, returning local sessions:', err);
+    return localSessions;
   }
 }
 
 export async function deleteVoiceSessionFromFirestore(sessionId: string): Promise<void> {
+  try {
+    const raw = localStorage.getItem('synapse_voice_sessions');
+    if (raw) {
+      const map = JSON.parse(raw);
+      delete map[sessionId];
+      localStorage.setItem('synapse_voice_sessions', JSON.stringify(map));
+    }
+  } catch { /* ignore */ }
+
   const user = auth.currentUser;
   if (!user) return;
 
-  const path = `users/${user.uid}/voiceSessions/${sessionId}`;
   try {
     await deleteDoc(doc(db, 'users', user.uid, 'voiceSessions', sessionId));
   } catch (err) {
-    handleFirestoreError(err, OperationType.DELETE, path);
+    console.warn('[Firestore] Delete voice session failed:', err);
   }
 }
 
 export async function renameVoiceSessionInFirestore(sessionId: string, newTitle: string): Promise<void> {
+  try {
+    const raw = localStorage.getItem('synapse_voice_sessions');
+    if (raw) {
+      const map = JSON.parse(raw);
+      if (map[sessionId]) {
+        map[sessionId].title = newTitle;
+        localStorage.setItem('synapse_voice_sessions', JSON.stringify(map));
+      }
+    }
+  } catch { /* ignore */ }
+
   const user = auth.currentUser;
   if (!user) return;
 
-  const path = `users/${user.uid}/voiceSessions/${sessionId}`;
   try {
     await updateDoc(doc(db, 'users', user.uid, 'voiceSessions', sessionId), {
       title: newTitle,
       updatedAt: new Date().toISOString(),
     });
   } catch (err) {
-    handleFirestoreError(err, OperationType.UPDATE, path);
+    console.warn('[Firestore] Rename voice session failed:', err);
   }
 }
+
+export async function saveQuizResultToFirestore(result: any): Promise<string> {
+  const user = auth.currentUser;
+  const id = `quiz_${Date.now()}`;
+  if (!user) return id;
+  try {
+    await setDoc(doc(db, 'users', user.uid, 'quizResults', id), {
+      ...result,
+      id,
+      userId: user.uid,
+      createdAt: new Date().toISOString(),
+    });
+    return id;
+  } catch (err) {
+    console.warn('[Firestore] Save quiz result failed:', err);
+    return id;
+  }
+}
+
+
+

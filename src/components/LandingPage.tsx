@@ -30,8 +30,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             <a href="#how-it-works" className="text-on-surface-variant font-medium hover:text-on-surface transition-colors duration-150">
               How It Works
             </a>
-            <a href="#testimonials" className="text-on-surface-variant font-medium hover:text-on-surface transition-colors duration-150">
-              Testimonials
+            <a href="#pedagogy" className="text-on-surface-variant font-medium hover:text-on-surface transition-colors duration-150">
+              Science & Research
             </a>
             <a href="#pricing" className="text-on-surface-variant font-medium hover:text-on-surface transition-colors duration-150">
               Pricing
@@ -417,29 +417,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               </div>
             </div>
 
-            {/* Card 5: Handwritten Notes Analysis */}
+            {/* Card 5: Deep-Reasoning Generative AI Study Tutor */}
             <div className="glass-card card-hover rounded-xl p-8 flex flex-col justify-between">
               <div>
-                <div className="w-12 h-12 rounded-lg bg-surface-container-highest border border-outline-variant flex items-center justify-center text-secondary mb-6">
-                  <span className="material-symbols-outlined text-2xl">draw</span>
+                <div className="w-12 h-12 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mb-6">
+                  <span className="material-symbols-outlined text-2xl">neurology</span>
                 </div>
                 <h3 className="text-xl font-headline font-semibold text-on-surface mb-3 tracking-tight">
-                  Handwritten Notes AI Diagnostic
+                  Generative AI Reasoning Tutor
                 </h3>
                 <p className="text-sm font-body text-on-surface-variant leading-relaxed">
-                  Snap photos of notebook pages, derivations, and circuit sketches. AI verifies mathematical correctness and generates LaTeX flashcards.
+                  Dual-Engine Socratic tutor powered by local Gemma 4B and Gemini Flash with visible thought chains, RAG textbook grounding, and instant problem breakdowns.
                 </p>
               </div>
               <div className="mt-8 pt-4 border-t border-outline-variant/60 flex items-center justify-between">
-                <span className="text-xs font-mono text-secondary flex items-center gap-1">
-                  <span className="material-symbols-outlined text-xs">camera_alt</span>
-                  <span>Vision 2.0 Ingestion</span>
+                <span className="text-xs font-mono text-indigo-400 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">psychology</span>
+                  <span>Deep Reasoning Traces</span>
                 </span>
                 <button
-                  onClick={() => onNavigate('handwritten-analysis')}
-                  className="text-xs font-mono text-secondary hover:underline flex items-center gap-1 cursor-pointer"
+                  onClick={() => onNavigate('ai-tutor')}
+                  className="text-xs font-mono text-indigo-300 hover:text-indigo-200 hover:underline flex items-center gap-1 cursor-pointer"
                 >
-                  <span>Scan Notes</span>
+                  <span>Launch Tutor</span>
                   <span className="material-symbols-outlined text-xs">arrow_forward</span>
                 </button>
               </div>
@@ -505,7 +505,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                 Drop course syllabi, lecture slide links, or custom reading schedules. Define your test dates, target letter grade, or percentile goal.
               </p>
               <div className="mt-6 p-3 rounded bg-surface border border-outline-variant text-xs font-mono text-on-surface-variant">
-                Input: PDF, DOCX, Notion, or Canvas URL
+                Input: PDF, DOCX, Notion, or LMS Portal URL
               </div>
             </div>
 
@@ -628,86 +628,83 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* ================= TESTIMONIALS ================= */}
-      <section className="py-24 border-t border-outline-variant bg-surface relative" id="testimonials">
+      {/* ================= EVIDENCE-BASED PEDAGOGICAL RESEARCH ================= */}
+      <section className="py-24 border-t border-outline-variant bg-surface relative" id="pedagogy">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-xs font-mono text-primary uppercase tracking-widest block mb-3">High-Stakes Results</span>
+            <span className="text-xs font-mono text-primary uppercase tracking-widest block mb-3">Cognitive Science Foundations</span>
             <h2 className="text-3xl md:text-4xl font-headline font-bold text-on-surface tracking-tight mb-4">
-              Proven on the world’s toughest exams.
+              Groundwork in Peer-Reviewed Memory Science
             </h2>
             <p className="text-on-surface-variant font-body text-base">
-              From complex CS algorithms to grueling engineering qualifications, here is how candidates locked in their target scores.
+              Synapse AI replaces brute-force cramming with mathematically verified cognitive load and memory decay models.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Testimonial 1 */}
+            {/* Research Pillar 1 */}
             <div className="bg-surface-container rounded-xl border border-outline-variant p-6 flex flex-col justify-between">
               <div>
-                <div className="flex items-center gap-1 text-primary mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className="material-symbols-outlined text-sm text-primary">
-                      star
-                    </span>
-                  ))}
+                <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mb-4">
+                  <span className="material-symbols-outlined text-xl">timeline</span>
                 </div>
-                <p className="text-sm font-body text-on-surface leading-relaxed mb-6">
-                  "I uploaded my Distributed Systems and Algorithms syllabi alongside CLRS and MIT 6.824 lectures. Synapse calibrated the entire roadmap with spaced retrieval. Scored in the 99.8th percentile on the engineering benchmark."
+                <h3 className="text-base font-headline font-semibold text-on-surface mb-2">
+                  FSRS Spaced Repetition Algorithm
+                </h3>
+                <p className="text-sm font-body text-on-surface-variant leading-relaxed mb-6">
+                  Calculates optimal inter-repetition intervals based on individual memory stability and difficulty ratings, preventing retroactive interference across dense curricula.
                 </p>
               </div>
               <div className="pt-4 border-t border-outline-variant flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-on-surface">Elena Rostova</div>
-                  <div className="text-xs font-mono text-on-surface-variant">GATE CS/DA Rank 12 • Systems Track</div>
+                  <div className="text-xs font-semibold text-on-surface">Peer-Reviewed Standard</div>
+                  <div className="text-[11px] font-mono text-on-surface-variant">DSR Model (Difficulty, Stability, Retrievability)</div>
                 </div>
-                <span className="text-[10px] font-mono text-tertiary px-2 py-0.5 rounded bg-tertiary-container">VERIFIED</span>
+                <span className="text-[10px] font-mono text-primary px-2 py-0.5 rounded bg-primary/10 border border-primary/20">RESEARCH</span>
               </div>
             </div>
 
-            {/* Testimonial 2 */}
+            {/* Research Pillar 2 */}
             <div className="bg-surface-container rounded-xl border border-outline-variant p-6 flex flex-col justify-between">
               <div>
-                <div className="flex items-center gap-1 text-primary mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className="material-symbols-outlined text-sm text-primary">
-                      star
-                    </span>
-                  ))}
+                <div className="w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 mb-4">
+                  <span className="material-symbols-outlined text-xl">psychology</span>
                 </div>
-                <p className="text-sm font-body text-on-surface leading-relaxed mb-6">
-                  "The self-healing schedule was my lifeline while balancing production engineering on-call rotations. When a deployment ran over, Synapse effortlessly redistributed my deep learning modules without weekend panic."
+                <h3 className="text-base font-headline font-semibold text-on-surface mb-2">
+                  Testing Effect & Active Oral Recall
+                </h3>
+                <p className="text-sm font-body text-on-surface-variant leading-relaxed mb-6">
+                  Based on Roediger & Karpicke (2006): active retrieval through speech produces significantly greater long-term retention compared to passive reading or highlighting.
                 </p>
               </div>
               <div className="pt-4 border-t border-outline-variant flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-on-surface">Marcus Vance</div>
-                  <div className="text-xs font-mono text-on-surface-variant">ML Systems Engineer • Stanford AI Lab</div>
+                  <div className="text-xs font-semibold text-on-surface">Empirical Study</div>
+                  <div className="text-[11px] font-mono text-on-surface-variant">Science 319 (Roediger & Butler)</div>
                 </div>
-                <span className="text-[10px] font-mono text-tertiary px-2 py-0.5 rounded bg-tertiary-container">VERIFIED</span>
+                <span className="text-[10px] font-mono text-sky-400 px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20">CITIED</span>
               </div>
             </div>
 
-            {/* Testimonial 3 */}
+            {/* Research Pillar 3 */}
             <div className="bg-surface-container rounded-xl border border-outline-variant p-6 flex flex-col justify-between">
               <div>
-                <div className="flex items-center gap-1 text-primary mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className="material-symbols-outlined text-sm text-primary">
-                      star
-                    </span>
-                  ))}
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4">
+                  <span className="material-symbols-outlined text-xl">hub</span>
                 </div>
-                <p className="text-sm font-body text-on-surface leading-relaxed mb-6">
-                  "Passed the California Bar on my first try while working full-time. The FSRS decay alerts prevented me from forgetting Civil Procedure topics I covered in month one. Indispensable tool."
+                <h3 className="text-base font-headline font-semibold text-on-surface mb-2">
+                  Topological Syllabus Chunking
+                </h3>
+                <p className="text-sm font-body text-on-surface-variant leading-relaxed mb-6">
+                  Constructs directed acyclic topic dependency graphs so foundational mathematical prerequisites are scheduled before advanced applied submodules.
                 </p>
               </div>
               <div className="pt-4 border-t border-outline-variant flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-on-surface">Priya S. Chen</div>
-                  <div className="text-xs font-mono text-on-surface-variant">CA Bar 1st Attempt • Stanford Law</div>
+                  <div className="text-xs font-semibold text-on-surface">Curricular Design</div>
+                  <div className="text-[11px] font-mono text-on-surface-variant">Bloom's Taxonomy Cognitive Hierarchy</div>
                 </div>
-                <span className="text-[10px] font-mono text-tertiary px-2 py-0.5 rounded bg-tertiary-container">VERIFIED</span>
+                <span className="text-[10px] font-mono text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">MAPPED</span>
               </div>
             </div>
           </div>

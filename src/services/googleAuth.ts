@@ -15,39 +15,43 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
 
-// Workspace OAuth Scopes (Drive, Slides, Forms, Gmail, Sheets)
-export const WORKSPACE_SCOPES = [
-  'https://www.googleapis.com/auth/drive',
-  'https://www.googleapis.com/auth/drive.activity',
-  'https://www.googleapis.com/auth/drive.activity.readonly',
-  'https://www.googleapis.com/auth/drive.appdata',
-  'https://www.googleapis.com/auth/drive.apps.readonly',
+// Minimal Identity Scopes for initial sign-in (Section J.1 compliance)
+export const IDENTITY_SCOPES = [
+  'openid',
+  'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/userinfo.profile',
+];
+
+// Incremental Feature-Specific Scopes
+export const DRIVE_SCOPES = [
   'https://www.googleapis.com/auth/drive.file',
-  'https://www.googleapis.com/auth/drive.install',
-  'https://www.googleapis.com/auth/drive.meet.readonly',
-  'https://www.googleapis.com/auth/drive.metadata',
-  'https://www.googleapis.com/auth/drive.metadata.readonly',
-  'https://www.googleapis.com/auth/drive.photos.readonly',
   'https://www.googleapis.com/auth/drive.readonly',
-  'https://www.googleapis.com/auth/drive.scripts',
-  'https://www.googleapis.com/auth/presentations',
-  'https://www.googleapis.com/auth/presentations.readonly',
-  'https://www.googleapis.com/auth/spreadsheets',
-  'https://www.googleapis.com/auth/spreadsheets.readonly',
-  'https://www.googleapis.com/auth/forms.body',
-  'https://www.googleapis.com/auth/forms.body.readonly',
-  'https://www.googleapis.com/auth/forms.responses.readonly',
-  'https://mail.google.com/',
-  'https://www.googleapis.com/auth/gmail.modify',
-  'https://www.googleapis.com/auth/gmail.send',
+];
+
+export const GMAIL_SCOPES = [
   'https://www.googleapis.com/auth/gmail.readonly',
 ];
 
+export const SLIDES_SCOPES = [
+  'https://www.googleapis.com/auth/presentations.readonly',
+];
+
+export const SHEETS_SCOPES = [
+  'https://www.googleapis.com/auth/spreadsheets',
+];
+
+export const WORKSPACE_SCOPES = [
+  ...DRIVE_SCOPES,
+  ...GMAIL_SCOPES,
+  ...SLIDES_SCOPES,
+  ...SHEETS_SCOPES,
+];
+
+// Base provider configured for basic identity only
 const provider = new GoogleAuthProvider();
-WORKSPACE_SCOPES.forEach((scope) => provider.addScope(scope));
+IDENTITY_SCOPES.forEach((scope) => provider.addScope(scope));
 provider.setCustomParameters({
-  prompt: 'consent',
-  access_type: 'offline',
+  prompt: 'select_account',
 });
 
 // In-memory token management (strictly adheres to security policy: no localStorage/sessionStorage)
@@ -108,4 +112,21 @@ export const logout = async (): Promise<void> => {
   await signOut(auth);
   cachedAccessToken = null;
   currentUser = null;
+};
+
+/**
+ * Request incremental scopes on-demand when student invokes Drive, Gmail, or Slides
+ */
+export const requestIncrementalScope = async (scopes: string[]): Promise<string> => {
+  const incrementalProvider = new GoogleAuthProvider();
+  scopes.forEach((s) => incrementalProvider.addScope(s));
+  incrementalProvider.setCustomParameters({ prompt: 'consent' });
+  const result = await signInWithPopup(auth, incrementalProvider);
+  const credential = GoogleAuthProvider.credentialFromResult(result);
+  if (!credential?.accessToken) {
+    throw new Error('Failed to acquire incremental Google OAuth token');
+  }
+  cachedAccessToken = credential.accessToken;
+  currentUser = result.user;
+  return credential.accessToken;
 };

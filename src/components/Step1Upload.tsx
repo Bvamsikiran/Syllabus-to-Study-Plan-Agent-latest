@@ -490,12 +490,12 @@ Official Practice Sim: Nov 20 (Weight: 45%)`);
                   value={syllabusText}
                   onChange={(e) => setSyllabusText(e.target.value)}
                   rows={10}
-                  placeholder={`Paste raw syllabus text, lecture outlines, topic schedules, or copy directly from Canvas / Blackboard / Notion...
+                  placeholder={`Paste raw syllabus text, lecture outlines, topic schedules, or copy directly from Blackboard / Moodle / Notion...
 
 Example:
-Week 1: Cellular Respiration & Krebs Cycle
-Week 2: Enzyme Kinetics (Michaelis-Menten)
-Oct 14: Midterm Exam 1 (Weight: 25%)`}
+Unit 1: Relational Algebra & SQL Query Optimization
+Unit 2: Indexing, B+ Trees, and Transaction Concurrency Control
+Nov 15: Midterm Exam 1 (Weight: 25%)`}
                   className="w-full flex-1 bg-surface-container-lowest border border-outline-variant rounded-lg p-3 text-on-surface font-mono text-xs placeholder:text-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none leading-relaxed transition-colors"
                 />
                 {/* Bottom Counter bar */}
@@ -510,19 +510,19 @@ Oct 14: Midterm Exam 1 (Weight: 25%)`}
                 </div>
               </div>
 
-              {/* Canvas / University LMS Integration Micro-Card */}
+              {/* University LMS Integration Micro-Card */}
               <div className="mt-3.5 p-3 rounded-lg bg-surface-container-high border border-outline-variant flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary text-base">school</span>
                     <span className="text-xs font-label text-on-surface font-medium">
-                      {lmsConnected ? 'University LMS: Connected' : 'University LMS (Canvas / Blackboard)'}
+                      {lmsConnected ? 'University Portal: Connected' : 'University LMS (Blackboard / Moodle)'}
                     </span>
                     <button
                       type="button"
                       onClick={() => setShowLmsInfo(!showLmsInfo)}
                       className="text-zinc-400 hover:text-primary transition-colors"
-                      title="What is Canvas LMS?"
+                      title="What is University LMS Sync?"
                     >
                       <span className="material-symbols-outlined text-sm">help_outline</span>
                     </button>
@@ -541,12 +541,9 @@ Oct 14: Midterm Exam 1 (Weight: 25%)`}
 
                 {showLmsInfo && (
                   <div className="p-2.5 rounded bg-surface-container border border-primary/30 text-[11px] text-zinc-300 leading-relaxed space-y-1">
-                    <p className="font-semibold text-primary">What is Canvas LMS?</p>
+                    <p className="font-semibold text-primary">University LMS Integration</p>
                     <p>
-                      <strong>Canvas</strong> is a popular Learning Management System (LMS) used by colleges and universities (similar to Blackboard, Moodle, or Google Classroom) where professors publish course syllabi, lecture slides, and assignment deadlines.
-                    </p>
-                    <p className="text-zinc-400">
-                      If your university uses Canvas, clicking connect imports your official course syllabus. Otherwise, you can simply upload your PDF or paste your text above!
+                      Connect your college learning portal (Blackboard, Moodle, or Google Classroom) to automatically import your official course syllabus and lecture schedule.
                     </p>
                   </div>
                 )}

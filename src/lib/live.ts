@@ -6,7 +6,7 @@
 
 import { LiveAudioPlayer, LiveAudioRecorder } from './audio';
 import { SessionKnowledgeBase, GEMINI_LIVE_TOOLS } from './knowledge';
-import { VoiceTurn } from '../types';
+import { GroundedSource, VoiceTurn } from '../types';
 
 export type LiveSessionStatus =
   | 'idle'
@@ -39,7 +39,7 @@ export class GeminiLiveSession {
   private status: LiveSessionStatus = 'idle';
   private currentAssistantText = '';
   private currentUserText = '';
-  private currentAssistantSources: Array<{ title: string; section?: string; snippet?: string }> = [];
+  private currentAssistantSources: GroundedSource[] = [];
 
   constructor(config: LiveClientConfig) {
     this.config = config;
@@ -227,10 +227,12 @@ export class GeminiLiveSession {
       const searchResults = this.config.knowledgeBase.search(query, 3);
 
       const formattedResults = searchResults.map((r) => {
-        // Collect citation for UI chips
         this.currentAssistantSources.push({
+          id: r.chunk.id,
+          filename: r.chunk.sourceTitle,
           title: r.chunk.sourceTitle,
           section: r.chunk.section,
+          page: r.chunk.page || 1,
           snippet: r.chunk.text.slice(0, 180) + '...',
         });
 
@@ -346,5 +348,9 @@ export class GeminiLiveSession {
       this.ws = null;
     }
     this.setStatus('closed', 'Session closed.');
+  }
+
+  public disconnect() {
+    this.close();
   }
 }
