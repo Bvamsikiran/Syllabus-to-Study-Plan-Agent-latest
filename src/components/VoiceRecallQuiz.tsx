@@ -424,7 +424,7 @@ export const VoiceRecallQuiz: React.FC<VoiceRecallQuizProps> = ({
             correctInsights: d.correctInsights || [],
             spokenSummary: d.spokenSummary,
             misconception: d.misconception,
-          }).catch((err) => console.warn('Firestore autosave warning:', err));
+          }).catch((err: any) => console.warn('Firestore autosave warning:', err));
         }
       }
 
@@ -581,7 +581,7 @@ export const VoiceRecallQuiz: React.FC<VoiceRecallQuizProps> = ({
         </div>
       </header>
 
-      {/* ================= MAIN CANVAS ================= */}
+      {/* ================= MAIN CONTENT VIEW ================= */}
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6 flex flex-col gap-6">
         {/* 1. Prompt Card */}
         <section className="bg-surface-container border border-outline-variant rounded-xl p-6 relative overflow-hidden">
@@ -929,11 +929,11 @@ export const VoiceRecallQuiz: React.FC<VoiceRecallQuizProps> = ({
 
               <div className="pt-1 flex items-center gap-2">
                 <button
-                  onClick={() => onNavigate('handwritten-analysis')}
+                  onClick={() => onNavigate('ai-tutor')}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high border border-outline-variant hover:border-primary text-xs font-mono text-on-surface transition-colors cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-primary !text-sm">menu_book</span>
-                  <span>{diagnosticFeedback.misconception.link}</span>
+                  <span className="material-symbols-outlined text-primary !text-sm">auto_awesome</span>
+                  <span>Deep-Dive with AI Tutor: {diagnosticFeedback.misconception.link}</span>
                   <span className="material-symbols-outlined !text-xs text-secondary">arrow_forward</span>
                 </button>
               </div>
@@ -968,10 +968,10 @@ export const VoiceRecallQuiz: React.FC<VoiceRecallQuizProps> = ({
               <span>Re-record Answer</span>
             </button>
             <button
-              onClick={() => onNavigate('handwritten-analysis')}
+              onClick={() => onNavigate('dashboard')}
               className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-fixed text-on-primary text-xs font-bold tracking-tight shadow-md shadow-primary/20 transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <span>Next: Answer Analysis</span>
+              <span>Back to Dashboard</span>
               <span className="material-symbols-outlined !text-sm">arrow_forward</span>
             </button>
           </div>

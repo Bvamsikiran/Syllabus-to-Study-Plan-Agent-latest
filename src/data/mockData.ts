@@ -1,4 +1,4 @@
-import { SyllabusModule, ResourceItem, AnnotationPin } from '../types';
+import { SyllabusModule, ResourceItem } from '../types';
 
 export const INITIAL_MODULES: SyllabusModule[] = [
   {
@@ -156,41 +156,4 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
   },
 ];
 
-export const INITIAL_PINS: AnnotationPin[] = [
-  {
-    id: 1,
-    title: 'Pin 1: Accurate Backprop Gradient Chain Rule Derivation',
-    type: 'correct',
-    points: '+4.0 pts',
-    description:
-      'Properly formulated the partial derivative of cost with respect to hidden layer weights: ∂C/∂w_ij = δ_j * a_i, correctly decomposing through the pre-activation logit z_j and activation derivative σ\'(z_j).',
-    ocrSnippet: '...dC/dw = dC/da * da/dz * dz/dw = delta_j * a_i (chain rule applied)...',
-    ruleMet: 'Rubric Criterion 1: Computational Graph & Chain Rule (Fully Met)',
-  },
-  {
-    id: 2,
-    title: 'Pin 2: Inverted B+ Tree Maximum Keys Formula',
-    type: 'error',
-    points: '-2.0 pts',
-    description:
-      'For a B+ tree of order p, an internal node can have at most (p - 1) search key values and p child pointers. You wrote p keys and (p - 1) pointers. In GATE CS, confusing order with pointer capacity loses 2 marks.',
-    remediation:
-      'Review Korth DBMS Ch. 11.3: "B+ Tree File Organization". For order p: Max pointers = p, Max keys = p - 1. Min pointers for non-root internal node = ⌈p/2⌉.',
-  },
-  {
-    id: 3,
-    title: 'Pin 3: Paging TLB Effective Memory Access Time (EMAT)',
-    type: 'warning',
-    points: '-0.5 pts',
-    description:
-      'In a 2-level paging scheme with TLB hit ratio h, EMAT = h*(TLB + M) + (1-h)*(TLB + 3*M). You accounted for only 2 memory accesses on a TLB miss instead of 3 (2 for page tables + 1 for actual data frame).',
-  },
-  {
-    id: 4,
-    title: 'Pin 4: GATE DA Examination Scoring Strategy',
-    type: 'strategy',
-    points: 'Strategy',
-    description:
-      'In GATE DA, Multiple Select Questions (MSQ) and Numerical Answer Type (NAT) have zero negative marking. Always submit calculated numeric intervals on NAT questions without hesitation.',
-  },
-];
+

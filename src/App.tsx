@@ -13,10 +13,9 @@ import { Step1Upload } from './components/Step1Upload';
 import { Step2Exam } from './components/Step2Exam';
 import { Step3Bandwidth } from './components/Step3Bandwidth';
 import { Step4Resources } from './components/Step4Resources';
-import { StudyDashboard } from './components/StudyDashboard';
-import { VoiceRecallQuiz } from './components/VoiceRecallQuiz';
+import { ModernStudyDashboard } from './components/ModernStudyDashboard';
 import { VoiceStudyCoach } from './components/VoiceStudyCoach';
-import { HandwrittenAnalysis } from './components/HandwrittenAnalysis';
+import { GenerativeAITutor } from './components/GenerativeAITutor';
 import { GoogleAuthProviderComponent, useGoogleAuth } from './context/GoogleAuthContext';
 import { GoogleDriveModal } from './components/GoogleDriveModal';
 import { GoogleSlidesModal } from './components/GoogleSlidesModal';
@@ -31,10 +30,10 @@ import {
 } from './services/firestoreService';
 
 function AppContent() {
-  // Sync screen with URL hash if present
   const getInitialScreen = (): ScreenId => {
     const hash = window.location.hash.replace('#', '') as ScreenId;
     const validScreens: ScreenId[] = [
+      'overview',
       'landing',
       'master-schedule',
       'step1-upload',
@@ -44,9 +43,9 @@ function AppContent() {
       'dashboard',
       'voice-quiz',
       'voice-coach',
-      'handwritten-analysis',
+      'ai-tutor',
     ];
-    return validScreens.includes(hash) ? hash : 'landing';
+    return validScreens.includes(hash) ? hash : 'dashboard';
   };
 
   const [currentScreen, setCurrentScreen] = useState<ScreenId>(getInitialScreen);
@@ -59,7 +58,7 @@ function AppContent() {
   const [targetScore, setTargetScore] = useState<number>(85);
   const [retentionMode, setRetentionMode] = useState<'aggressive' | 'balanced'>('aggressive');
 
-  // Bandwidth slots (default matching Screen 5)
+  // Bandwidth slots
   const [slots, setSlots] = useState<Record<string, ScheduleSlot>>(() => {
     const initial: Record<string, ScheduleSlot> = {
       'mon-morning': { day: 'mon', timeBlock: 'morning', type: 'focus', hours: 4.0, label: 'Active Focus', sublabel: 'Core Syllabus' },
@@ -96,7 +95,7 @@ function AppContent() {
     user,
   } = useGoogleAuth();
 
-  // Test Firestore connection on boot
+  // Test Firestore connection on boot safely
   useEffect(() => {
     testFirestoreConnection().catch(() => {});
   }, []);
@@ -157,6 +156,7 @@ function AppContent() {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '') as ScreenId;
       const validScreens: ScreenId[] = [
+        'overview',
         'landing',
         'master-schedule',
         'step1-upload',
@@ -166,7 +166,7 @@ function AppContent() {
         'dashboard',
         'voice-quiz',
         'voice-coach',
-        'handwritten-analysis',
+        'ai-tutor',
       ];
       if (validScreens.includes(hash)) {
         setCurrentScreen(hash);
@@ -190,18 +190,20 @@ function AppContent() {
         reference: u.reference || 'Syllabus Assigned',
         status: idx < 2 ? 'completed' : idx === 2 ? 'in-progress' : 'pending',
         progress: idx === 0 ? 100 : idx === 1 ? 100 : idx === 2 ? 60 : 0,
+        priority: u.priority || (idx < 2 ? 'high' : 'medium'),
+        category: u.category || 'Core Syllabus',
       }));
       setModules(converted);
 
       // Save to Firebase Firestore if logged in
       if (user) {
         saveStudyPlanToFirestore({
-          courseName: data.courseName || 'Distributed Systems & Engineering',
+          courseName: data.courseName || 'GATE 2026: Computer Science & Data Science',
           units: converted,
           milestones: data.milestones,
           pacing: data.pacing,
           confidence: data.confidence,
-        }).catch((e) => console.warn('Firestore autosave warning:', e));
+        }).catch((e) => console.warn('Firestore autosave note:', e));
       }
     }
   };
@@ -211,7 +213,6 @@ function AppContent() {
     setSyllabusText(text);
     navigateTo('step1-upload');
 
-    // Trigger AI parsing for imported Drive text
     try {
       const res = await fetch('/api/analyze-syllabus', {
         method: 'POST',
@@ -268,12 +269,12 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-on-surface flex flex-col">
+    <div className="min-h-screen bg-[#070b19] text-slate-100 flex flex-col font-sans">
       {/* Dev & Navigation Quick Switcher Banner */}
       <NavigationHeader currentScreen={currentScreen} onNavigate={navigateTo} />
 
       {/* Screen Render */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {currentScreen === 'landing' && <LandingPage onNavigate={navigateTo} />}
 
         {currentScreen === 'master-schedule' && (
@@ -284,7 +285,7 @@ function AppContent() {
             targetDate={targetDate}
             targetScore={targetScore}
             retentionMode={retentionMode}
-            courseName={parsedData?.courseName || 'Distributed Systems & Engineering'}
+            courseName={parsedData?.courseName || 'GATE 2026: Computer Science & Data Science'}
           />
         )}
 
@@ -322,38 +323,39 @@ function AppContent() {
             resources={resources}
             setResources={setResources}
             modules={modules}
-            courseName={parsedData?.courseName || 'Distributed Systems & Engineering'}
+            courseName={parsedData?.courseName || 'GATE 2026: Computer Science & Data Science'}
           />
         )}
 
-        {currentScreen === 'dashboard' && (
-          <StudyDashboard
+        {/* Dashboard matching screenshot mockup */}
+        {(currentScreen === 'dashboard' || currentScreen === 'overview') && (
+          <ModernStudyDashboard
+            currentScreen={currentScreen}
             onNavigate={navigateTo}
             modules={modules}
-            setModules={setModules}
-            courseName={parsedData?.courseName || 'CS 3200: Distributed Systems & Engineering'}
-            targetDate={targetDate}
-            targetScore={targetScore}
-            slots={slots}
-            retentionMode={retentionMode}
+            resources={resources}
+            syllabusText={syllabusText}
+            onOpenUploadModal={() => navigateTo('step1-upload')}
+            onOpenResourceModal={() => navigateTo('step4-resources')}
           />
+        )}
+
+        {currentScreen === 'ai-tutor' && (
+          <div className="flex-1 p-6 bg-[#070b19]">
+            <GenerativeAITutor
+              courseContext={parsedData?.courseName || 'GATE CS & Data Science'}
+              onNavigateToKnowledgeBase={() => navigateTo('step4-resources')}
+            />
+          </div>
         )}
 
         {(currentScreen === 'voice-quiz' || currentScreen === 'voice-coach') && (
           <VoiceStudyCoach
             onNavigate={navigateTo}
             modules={modules}
-            courseName={parsedData?.courseName || 'CS 3200: Distributed Systems & Engineering'}
+            courseName={parsedData?.courseName || 'GATE 2026: Computer Science & Data Science'}
             resources={resources}
             syllabusText={syllabusText}
-          />
-        )}
-
-        {currentScreen === 'handwritten-analysis' && (
-          <HandwrittenAnalysis
-            onNavigate={navigateTo}
-            modules={modules}
-            courseName={parsedData?.courseName || 'CS 3200: Distributed Systems & Engineering'}
           />
         )}
       </div>

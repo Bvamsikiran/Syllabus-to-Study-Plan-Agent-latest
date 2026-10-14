@@ -616,18 +616,18 @@ export const Step3Bandwidth: React.FC<Step3BandwidthProps> = ({ onNavigate, slot
           </div>
         </section>
 
-        {/* DAILY REVIEW THRESHOLD & SPACED BUFFER ZONE CONFIGURATION (Issue 8) */}
+        {/* DAILY REVISION GOAL & EXTRA TIME FOR CATCH-UP CONFIGURATION */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Card 1: Daily Review Threshold */}
+          {/* Card 1: Daily Revision Goal */}
           <div className="bg-surface-container border border-outline-variant rounded-xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-mono font-semibold uppercase text-zinc-200 flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-primary text-base">fact_check</span>
-                  Daily Review Threshold
+                  Daily Revision Goal
                 </h3>
                 <p className="text-xs text-zinc-400 mt-0.5">
-                  Maximum hours dedicated to active review & flashcards before rolling over to next day
+                  Target study hours each day for reviewing flashcards and practicing revision questions before rolling over
                 </p>
               </div>
               <span className="text-xs font-mono font-bold text-primary px-2.5 py-1 rounded bg-surface-container-high border border-primary/30">
@@ -659,16 +659,16 @@ export const Step3Bandwidth: React.FC<Step3BandwidthProps> = ({ onNavigate, slot
             </div>
           </div>
 
-          {/* Card 2: Spaced Buffer Zone Settings */}
+          {/* Card 2: Extra Time for Catch-Up */}
           <div className="bg-surface-container border border-outline-variant rounded-xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-mono font-semibold uppercase text-emerald-400 flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base">shield</span>
-                  Spaced Buffer Zone Allocation
+                  Extra Time for Catch-Up
                 </h3>
                 <p className="text-xs text-zinc-400 mt-0.5">
-                  Percentage of weekly time reserved to auto-heal missed sessions with zero schedule disruption
+                  Dedicated buffer time set aside each week so you can easily catch up on missed topics without falling behind
                 </p>
               </div>
               <span className="text-xs font-mono font-bold text-emerald-400 px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/30">

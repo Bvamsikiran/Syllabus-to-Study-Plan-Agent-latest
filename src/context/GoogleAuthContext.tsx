@@ -6,6 +6,7 @@ import {
   logout,
   getAccessToken,
   getCurrentUser,
+  requestIncrementalScope,
 } from '../services/googleAuth';
 
 interface GoogleAuthContextType {
@@ -15,6 +16,7 @@ interface GoogleAuthContextType {
   isSigningIn: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
+  requestScope: (scopes: string[]) => Promise<string>;
   driveModalOpen: boolean;
   setDriveModalOpen: (open: boolean) => void;
   slidesModalOpen: boolean;
@@ -82,6 +84,12 @@ export const GoogleAuthProviderComponent: React.FC<{ children: React.ReactNode }
     }
   };
 
+  const handleRequestScope = async (scopes: string[]): Promise<string> => {
+    const token = await requestIncrementalScope(scopes);
+    setAccessToken(token);
+    return token;
+  };
+
   return (
     <GoogleAuthContext.Provider
       value={{
@@ -91,6 +99,7 @@ export const GoogleAuthProviderComponent: React.FC<{ children: React.ReactNode }
         isSigningIn,
         signIn: handleSignIn,
         signOut: handleSignOut,
+        requestScope: handleRequestScope,
         driveModalOpen,
         setDriveModalOpen,
         slidesModalOpen,

@@ -163,13 +163,13 @@ export const MasterSchedule: React.FC<MasterScheduleProps> = ({
             </button>
 
             <button
-              onClick={() => onNavigate('handwritten-analysis')}
+              onClick={() => onNavigate('ai-tutor')}
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors text-xs text-left"
             >
-              <span className="material-symbols-outlined text-base">draw</span>
-              <span>Answer Analysis</span>
-              <span className="ml-auto text-[10px] font-mono px-1 py-0.2 rounded bg-tertiary-container text-tertiary">
-                AI Vision
+              <span className="material-symbols-outlined text-base">neurology</span>
+              <span>AI Reasoning Tutor</span>
+              <span className="ml-auto text-[10px] font-mono px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300">
+                Gemma/Flash
               </span>
             </button>
 
@@ -629,11 +629,11 @@ export const MasterSchedule: React.FC<MasterScheduleProps> = ({
                     <span>Oral Quiz</span>
                   </button>
                   <button
-                    onClick={() => onNavigate('handwritten-analysis')}
+                    onClick={() => onNavigate('ai-tutor')}
                     className="flex-1 py-2 px-3 rounded-lg bg-surface-container-high text-on-surface text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-surface-container-highest transition-all cursor-pointer border border-outline-variant active:scale-95"
                   >
-                    <span className="material-symbols-outlined text-sm">draw</span>
-                    <span>AI Vision</span>
+                    <span className="material-symbols-outlined text-sm">neurology</span>
+                    <span>AI Tutor</span>
                   </button>
                 </div>
               </div>

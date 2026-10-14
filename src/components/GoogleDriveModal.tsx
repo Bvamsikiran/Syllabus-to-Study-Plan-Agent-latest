@@ -6,6 +6,7 @@ import {
   exportStudyPlanToDrive,
   GoogleDriveFile,
 } from '../services/googleDrive';
+import { DRIVE_SCOPES } from '../services/googleAuth';
 import {
   X,
   HardDrive,
@@ -38,7 +39,7 @@ export const GoogleDriveModal: React.FC<GoogleDriveModalProps> = ({
   targetDate,
   targetScore,
 }) => {
-  const { user, accessToken, signIn, isSigningIn } = useGoogleAuth();
+  const { user, accessToken, signIn, isSigningIn, requestScope } = useGoogleAuth();
   const [files, setFiles] = useState<GoogleDriveFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -178,12 +179,12 @@ ${currentModules
                 </p>
               </div>
               <button
-                onClick={signIn}
+                onClick={() => requestScope(DRIVE_SCOPES)}
                 disabled={isSigningIn}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs shadow-lg shadow-emerald-900/30 transition-all active:scale-95"
               >
                 {isSigningIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <HardDrive className="w-4 h-4" />}
-                Sign in with Google to Connect Drive
+                Authorize Google Drive Access
               </button>
             </div>
           ) : (
