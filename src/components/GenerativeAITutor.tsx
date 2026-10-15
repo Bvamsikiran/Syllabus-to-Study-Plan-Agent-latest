@@ -31,11 +31,12 @@ import {
   deleteAITutorConversationFromFirestore,
 } from '../services/firestoreService';
 import { useGoogleAuth } from '../context/GoogleAuthContext';
+import { apiKeyService } from '../services/apiKeyService';
 
 export const GenerativeAITutor: React.FC<{
   courseContext?: string;
   onNavigateToKnowledgeBase?: () => void;
-}> = ({ courseContext = 'GATE CS & Data Science', onNavigateToKnowledgeBase }) => {
+}> = ({ courseContext = '', onNavigateToKnowledgeBase }) => {
   const { user } = useGoogleAuth();
   const [conversations, setConversations] = useState<AITutorConversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string>('');
@@ -76,16 +77,8 @@ export const GenerativeAITutor: React.FC<{
       title: 'New Study Conversation',
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      courseContext,
-      messages: [
-        {
-          id: `msg_welcome_${Date.now()}`,
-          role: 'assistant',
-          content: `Hello! I am your **Synapse AI Study Companion & Generative Tutor** for **${courseContext}**.\n\nAsk me any concept, algorithmic proof, problem derivation, or exam question. I will ground my answers directly in your indexed syllabus and notes, showing you my live reasoning and thought process step-by-step.`,
-          timestamp: Date.now(),
-          engineUsed: 'gemini-3.8-flash',
-        },
-      ],
+      courseContext: courseContext || 'Study Session',
+      messages: [],
     };
 
     setConversations((prev) => [newConv, ...prev]);
@@ -170,7 +163,10 @@ export const GenerativeAITutor: React.FC<{
     try {
       const response = await fetch('/api/ai-tutor/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...apiKeyService.getAiHeaders(),
+        },
         body: JSON.stringify({
           message: userText,
           context: courseContext,
@@ -180,35 +176,14 @@ export const GenerativeAITutor: React.FC<{
       });
 
       if (!response.ok) {
-        throw new Error(`AI Tutor server responded with status ${response.status}`);
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.message || errJson.error || `AI Tutor request failed with status ${response.status}`);
       }
 
       const data = await response.json();
 
-      // Generate response alternatives for multi-response selection (Option 4)
-      const alternatives: ResponseAlternative[] = [
-        {
-          id: 'alt_conc',
-          mode: 'conceptual',
-          label: 'Deep Conceptual Proof',
-          content: data.content,
-          thinking: data.thinking || 'Constructed rigorous mathematical and systems invariant foundation.',
-        },
-        {
-          id: 'alt_exam',
-          mode: 'exam-prep',
-          label: 'High-Yield Exam Drill',
-          content: `### High-Yield Exam Checklist\n\n${data.content.slice(0, 400)}...\n\n**Key Exam Traps:** Always verify boundary condition index bounds and worst-case time complexity asymptotic constants.`,
-          thinking: 'Filtered for scoring formulas, shortcut bounds, and negative marking hazards.',
-        },
-        {
-          id: 'alt_socratic',
-          mode: 'socratic',
-          label: 'Socratic Inquiry',
-          content: `To build lasting intuition: What would happen to this system if the input size doubled or if network packets were delayed? Consider how the state invariants adapt.`,
-          thinking: 'Derived diagnostic prompt to test deeper intuitive mastery.',
-        },
-      ];
+      // Only include alternatives if genuinely provided by the AI model
+      const alternatives: ResponseAlternative[] = Array.isArray(data.alternatives) ? data.alternatives : [];
 
       const finalizedAssistantMsg: AITutorMessage = {
         id: assistantPlaceholderId,
@@ -218,10 +193,10 @@ export const GenerativeAITutor: React.FC<{
         timestamp: Date.now(),
         sources: groundedSources,
         isStreaming: false,
-        engineUsed: data.engine || 'gemini-3.8-flash',
+        engineUsed: data.engineUsed || data.engine || 'gemini-3.8-flash',
         promptContext: data.promptContext,
         alternatives,
-        activeAlternativeId: 'alt_conc',
+        activeAlternativeId: alternatives.length > 0 ? alternatives[0].id : undefined,
       };
 
       const finalMessages = [...currentConv.messages, userMsg, finalizedAssistantMsg];
@@ -400,6 +375,21 @@ export const GenerativeAITutor: React.FC<{
 
         {/* Message Thread */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {(!activeConversation?.messages || activeConversation.messages.length === 0) && (
+            <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-8 text-slate-400">
+              <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center mb-4 text-cyan-400 shadow-lg shadow-cyan-500/10">
+                <Brain className="w-7 h-7" />
+              </div>
+              <h3 className="text-base font-semibold text-white mb-2">Synapse Generative AI Tutor</h3>
+              <p className="text-xs text-slate-400 max-w-md mb-4 leading-relaxed">
+                Ask any conceptual question, algorithmic proof, problem derivation, or exam question. Your answers will be grounded directly in your syllabus and uploaded materials.
+              </p>
+              <div className="flex items-center gap-2 text-[11px] font-mono text-cyan-400/80 bg-cyan-950/40 border border-cyan-800/40 px-3 py-1.5 rounded-lg">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Type your question below to begin your personalized study session</span>
+              </div>
+            </div>
+          )}
           <AnimatePresence>
             {activeConversation?.messages.map((msg) => (
               <motion.div
