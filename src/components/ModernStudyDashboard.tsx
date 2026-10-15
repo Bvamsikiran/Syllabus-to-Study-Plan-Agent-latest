@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Calendar,
   BookOpen,
@@ -12,7 +12,6 @@ import {
   ChevronDown,
   ChevronRight,
   TrendingUp,
-  Flame,
   Target,
   GraduationCap,
   FileText,
@@ -23,6 +22,7 @@ import {
   Cpu,
   Brain,
   CheckCircle,
+  Key,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -30,11 +30,14 @@ import {
   SyllabusModule,
   ResourceItem,
   UpcomingStudyTask,
+  AITutorConversation,
 } from '../types';
 import { VoiceCoachPanel } from './VoiceCoachPanel';
 import { GenerativeAITutor } from './GenerativeAITutor';
 import { ragService } from '../services/ragService';
 import { useGoogleAuth } from '../context/GoogleAuthContext';
+import { getAITutorConversationsFromFirestore } from '../services/firestoreService';
+import { apiKeyService } from '../services/apiKeyService';
 
 interface ModernStudyDashboardProps {
   currentScreen: ScreenId;
@@ -44,6 +47,7 @@ interface ModernStudyDashboardProps {
   syllabusText?: string;
   onOpenUploadModal?: () => void;
   onOpenResourceModal?: () => void;
+  onOpenApiKeyModal?: () => void;
 }
 
 export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
@@ -54,54 +58,72 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
   syllabusText = '',
   onOpenUploadModal,
   onOpenResourceModal,
+  onOpenApiKeyModal,
 }) => {
   const { user, signIn, signOut } = useGoogleAuth();
 
   // Internal tab within the unified dashboard workspace
   const [activeTab, setActiveTab] = useState<'overview' | 'study-plan' | 'knowledge-base' | 'voice-coach' | 'ai-tutor'>('overview');
-  const [selectedCourse, setSelectedCourse] = useState<string>('GATE CS + Data Science');
-  const [isCourseDropdownOpen, setIsCourseDropdownOpen] = useState<boolean>(false);
   const [isVoiceCoachDocked, setIsVoiceCoachDocked] = useState<boolean>(true);
   const [completedTaskIds, setCompletedTaskIds] = useState<Record<string, boolean>>({});
+  const [recentConversations, setRecentConversations] = useState<AITutorConversation[]>([]);
+  const [hasApiKey, setHasApiKey] = useState(apiKeyService.hasKey());
+
+  useEffect(() => {
+    return apiKeyService.subscribe((k) => setHasApiKey(Boolean(k)));
+  }, []);
 
   // Dynamic knowledge statistics from RAG service
   const knowledgeStats = ragService.getKnowledgeStats(user?.uid);
 
-  // Upcoming study tasks
-  const [upcomingTasks, setUpcomingTasks] = useState<UpcomingStudyTask[]>([
-    {
-      id: 'task-1',
-      time: 'Today, 7:00 PM',
-      title: 'OS — Process Scheduling & Synchronization',
-      category: 'Operating Systems',
-      priority: 'high',
-      completed: false,
-    },
-    {
-      id: 'task-2',
-      time: 'Today, 8:30 PM',
-      title: 'Linear Regression — Concepts & Practice',
-      category: 'Machine Learning',
-      priority: 'high',
-      completed: false,
-    },
-    {
-      id: 'task-3',
-      time: 'Tomorrow, 10:00 AM',
-      title: 'DBMS — Normalization & SQL',
-      category: 'Database Systems',
-      priority: 'medium',
-      completed: false,
-    },
-    {
-      id: 'task-4',
-      time: 'Tomorrow, 2:00 PM',
-      title: 'Graph Algorithms — BFS & DFS',
-      category: 'Data Structures & Algorithms',
-      priority: 'high',
-      completed: false,
-    },
-  ]);
+  // Load genuine recent conversations from Firestore
+  useEffect(() => {
+    let isMounted = true;
+    getAITutorConversationsFromFirestore()
+      .then((convs) => {
+        if (isMounted) {
+          setRecentConversations(convs.slice(0, 3));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  // Derive genuine course name
+  const courseDisplayName = modules.length > 0
+    ? (modules[0].name.split('(')[0].trim() || 'Active Study Plan')
+    : 'No Course Loaded';
+
+  // Genuine metrics calculations
+  const totalModulesCount = modules.length;
+  const completedModulesCount = modules.filter((m) => m.status === 'completed').length;
+  const inProgressModulesCount = modules.filter((m) => m.status === 'in-progress').length;
+  const overallCompletionPercentage = totalModulesCount > 0
+    ? Math.round((completedModulesCount / totalModulesCount) * 100)
+    : null;
+
+  // Genuine remaining topics count
+  const remainingTopicsCount = modules.reduce((acc, m) => {
+    if (m.status !== 'completed' && Array.isArray(m.topics)) {
+      return acc + m.topics.length;
+    }
+    return acc;
+  }, 0);
+
+  // Derive genuine upcoming tasks from actual syllabus modules
+  const upcomingTasks: UpcomingStudyTask[] = modules
+    .filter((m) => m.status !== 'completed')
+    .slice(0, 4)
+    .map((m, idx) => ({
+      id: `task-${m.id}`,
+      time: idx === 0 ? 'Next Focus Unit' : `Upcoming Session ${idx + 1}`,
+      title: m.topics?.[0] ? `${m.name} — ${m.topics[0]}` : m.name,
+      category: m.category || 'Core Unit',
+      priority: m.priority || (idx === 0 ? 'high' : 'medium'),
+      completed: Boolean(completedTaskIds[`task-${m.id}`]),
+    }));
 
   const toggleTaskCompletion = (taskId: string) => {
     setCompletedTaskIds((prev) => ({
@@ -182,7 +204,7 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
               </div>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                Live
+                Live S2S
               </span>
             </button>
 
@@ -200,18 +222,25 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
           </nav>
         </div>
 
-        {/* Bottom Section: Promo Card & Quick Actions */}
+        {/* Bottom Section: API Key & Quick Actions */}
         <div className="space-y-4 pt-4 border-t border-sky-500/15">
-          {/* Smarter Learning Card */}
-          <div className="p-3.5 rounded-2xl bg-gradient-to-b from-[#101b3d] to-[#0b132b] border border-indigo-500/25 shadow-lg relative overflow-hidden">
-            <div className="flex items-center gap-2.5 mb-1.5">
-              <div className="w-7 h-7 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                <Brain className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-white leading-tight">Smarter Learning.</span>
+          {/* Gemini API Key Indicator */}
+          <div
+            onClick={onOpenApiKeyModal}
+            className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+              hasApiKey
+                ? 'bg-[#101b3d]/80 border-cyan-500/30 hover:border-cyan-400/50'
+                : 'bg-amber-500/10 border-amber-500/30 hover:border-amber-400/50'
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <Key className={`w-3.5 h-3.5 ${hasApiKey ? 'text-cyan-400' : 'text-amber-400'}`} />
+              <span className="text-xs font-bold text-white">
+                {hasApiKey ? 'Gemini Key Configured' : 'Set Gemini Key'}
+              </span>
             </div>
-            <p className="text-[11px] text-slate-400 leading-normal mb-1">
-              Your AI-powered study companion for exam success.
+            <p className="text-[11px] text-slate-400 leading-tight">
+              {hasApiKey ? 'Voice & Neural Engine Active' : 'Paste key to enable live audio'}
             </p>
           </div>
 
@@ -249,63 +278,30 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
       </aside>
 
       {/* ═══════════════════════════════════════════════════════════
-          2. CENTER MAIN DASHBOARD OR FULL VIEW
+          2. CENTER MAIN DASHBOARD
       ═══════════════════════════════════════════════════════════ */}
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#070b19] neural-dashboard-bg relative">
         {/* Top Header Bar */}
         <header className="h-16 px-8 border-b border-sky-500/15 bg-[#070b19]/60 backdrop-blur-md flex items-center justify-between z-10 shrink-0">
-          {/* Course Selector Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setIsCourseDropdownOpen(!isCourseDropdownOpen)}
-              className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#0b132b] border border-sky-500/25 hover:border-cyan-400/50 text-xs text-white font-medium shadow-md transition-all cursor-pointer"
-            >
-              <GraduationCap className="w-4 h-4 text-cyan-400" />
-              <span>{selectedCourse}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </button>
-
-            {isCourseDropdownOpen && (
-              <div className="absolute top-10 left-0 w-64 bg-[#0b132b] border border-sky-500/30 rounded-xl shadow-2xl py-1.5 z-50 text-xs">
-                <div
-                  onClick={() => {
-                    setSelectedCourse('GATE CS + Data Science');
-                    setIsCourseDropdownOpen(false);
-                  }}
-                  className="px-3.5 py-2 hover:bg-[#131f42] text-white cursor-pointer"
-                >
-                  GATE CS + Data Science
-                </div>
-                <div
-                  onClick={() => {
-                    setSelectedCourse('GATE CS: Computer Science & IT');
-                    setIsCourseDropdownOpen(false);
-                  }}
-                  className="px-3.5 py-2 hover:bg-[#131f42] text-slate-300 cursor-pointer"
-                >
-                  GATE CS: Computer Science & IT
-                </div>
-                <div
-                  onClick={() => {
-                    setSelectedCourse('GATE DA: Data Science & AI');
-                    setIsCourseDropdownOpen(false);
-                  }}
-                  className="px-3.5 py-2 hover:bg-[#131f42] text-slate-300 cursor-pointer"
-                >
-                  GATE DA: Data Science & AI
-                </div>
-              </div>
-            )}
+          {/* Course Title Badge */}
+          <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#0b132b] border border-sky-500/25 text-xs text-white font-medium shadow-md">
+            <GraduationCap className="w-4 h-4 text-cyan-400" />
+            <span className="truncate max-w-xs">{courseDisplayName}</span>
           </div>
 
-          {/* Right Header: Notifications & User Profile */}
-          <div className="flex items-center gap-4">
+          {/* Right Header: Key, Notifications & User Profile */}
+          <div className="flex items-center gap-3">
             <button
-              className="p-2 rounded-full bg-[#0b132b] border border-sky-500/20 hover:border-cyan-400/50 text-slate-300 hover:text-white transition-all cursor-pointer relative"
-              title="Notifications"
+              onClick={onOpenApiKeyModal}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-mono transition-all cursor-pointer ${
+                hasApiKey
+                  ? 'bg-[#0b132b] border-cyan-500/30 text-cyan-300 hover:border-cyan-400/50'
+                  : 'bg-amber-500/15 border-amber-400/40 text-amber-300 hover:bg-amber-500/25'
+              }`}
+              title="Configure Gemini API Key"
             >
-              <Bell className="w-4 h-4" />
-              <span className="w-2 h-2 rounded-full bg-cyan-400 absolute top-1 right-1"></span>
+              <Key className="w-3.5 h-3.5" />
+              <span>{hasApiKey ? 'Gemini Active' : 'Set API Key'}</span>
             </button>
 
             {/* User Profile Pill */}
@@ -315,12 +311,18 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
                 className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-[#0b132b] border border-sky-500/25 hover:border-cyan-400/50 text-xs text-white cursor-pointer transition-all"
                 title="Click to sign out"
               >
-                <img
-                  src={user.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64'}
-                  alt="Avatar"
-                  className="w-6 h-6 rounded-full object-cover border border-cyan-400/40"
-                />
-                <span className="font-medium text-slate-200">{user.displayName || 'Vamsi Kiran'}</span>
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt="Avatar"
+                    className="w-6 h-6 rounded-full object-cover border border-cyan-400/40"
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-bold text-[10px]">
+                    {user.displayName?.charAt(0) || 'U'}
+                  </div>
+                )}
+                <span className="font-medium text-slate-200">{user.displayName || 'Scholar'}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </div>
             ) : (
@@ -338,7 +340,7 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
         <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
           {activeTab === 'ai-tutor' ? (
             <GenerativeAITutor
-              courseContext={selectedCourse}
+              courseContext={courseDisplayName}
               onNavigateToKnowledgeBase={() => onNavigate('step4-resources')}
             />
           ) : (
@@ -355,32 +357,43 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
                 </p>
               </div>
 
-              {/* ── Metric Cards Row ── */}
+              {/* ── Metric Cards Row (Truthful Metrics Only) ── */}
               <div className="grid grid-cols-4 gap-4">
-                {/* 1. Daily Progress Ring */}
+                {/* 1. Daily / Overall Progress */}
                 <div className="cyber-card p-4 flex items-center gap-3.5">
                   <div className="relative w-12 h-12 flex items-center justify-center">
                     <svg className="w-12 h-12 -rotate-90">
                       <circle cx="24" cy="24" r="20" stroke="#1e293b" strokeWidth="3.5" fill="none" />
-                      <circle
-                        cx="24"
-                        cy="24"
-                        r="20"
-                        stroke="#00f0ff"
-                        strokeWidth="3.5"
-                        strokeDasharray="125.6"
-                        strokeDashoffset="40.2"
-                        strokeLinecap="round"
-                        fill="none"
-                      />
+                      {overallCompletionPercentage !== null && (
+                        <circle
+                          cx="24"
+                          cy="24"
+                          r="20"
+                          stroke="#00f0ff"
+                          strokeWidth="3.5"
+                          strokeDasharray="125.6"
+                          strokeDashoffset={125.6 - (125.6 * overallCompletionPercentage) / 100}
+                          strokeLinecap="round"
+                          fill="none"
+                        />
+                      )}
                     </svg>
-                    <span className="absolute font-bold text-xs text-white">68%</span>
+                    <span className="absolute font-bold text-xs text-white">
+                      {overallCompletionPercentage !== null ? `${overallCompletionPercentage}%` : '—'}
+                    </span>
                   </div>
                   <div>
-                    <span className="text-[11px] font-semibold text-slate-200 block">Daily Progress</span>
-                    <span className="text-[10px] text-slate-400 font-mono">34 / 50 study hours</span>
+                    <span className="text-[11px] font-semibold text-slate-200 block">Overall Mastery</span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {totalModulesCount > 0
+                        ? `${completedModulesCount} / ${totalModulesCount} units done`
+                        : 'No syllabus uploaded'}
+                    </span>
                     <div className="w-20 h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                      <div className="w-[68%] h-full bg-cyan-400 rounded-full"></div>
+                      <div
+                        className="h-full bg-cyan-400 rounded-full transition-all duration-500"
+                        style={{ width: `${overallCompletionPercentage || 0}%` }}
+                      ></div>
                     </div>
                   </div>
                 </div>
@@ -392,10 +405,14 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
                   </div>
                   <div>
                     <div className="flex items-center gap-1">
-                      <span className="font-bold text-base text-white">14</span>
+                      <span className="font-bold text-base text-white">
+                        {user ? '0' : '—'}
+                      </span>
                     </div>
-                    <span className="text-[11px] font-semibold text-slate-200 block">Days Streak</span>
-                    <span className="text-[10px] text-amber-400 font-medium">Keep it going! 🔥</span>
+                    <span className="text-[11px] font-semibold text-slate-200 block">Study Streak</span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {user ? 'Begin a study session' : 'Sign in to track'}
+                    </span>
                   </div>
                 </div>
 
@@ -405,16 +422,22 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
                     <Target className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="font-bold text-base text-white">12</span>
+                    <span className="font-bold text-base text-white">
+                      {totalModulesCount > 0 ? remainingTopicsCount : '—'}
+                    </span>
                     <span className="text-[11px] font-semibold text-slate-200 block">Topics Left</span>
-                    <span className="text-[10px] text-slate-400">Focus areas remaining</span>
+                    <span className="text-[10px] text-slate-400">
+                      {totalModulesCount > 0 ? 'Topics to master' : 'No syllabus active'}
+                    </span>
                   </div>
                 </div>
 
-                {/* 4. Motivational Quote */}
+                {/* 4. Study Focus */}
                 <div className="cyber-card p-4 flex flex-col justify-center border-indigo-500/20 bg-gradient-to-br from-[#0b132b]/80 to-[#101b3d]/60">
                   <p className="text-xs italic text-indigo-200 leading-snug">
-                    "Small steps every day build big results."
+                    {totalModulesCount > 0
+                      ? 'Targeted spaced repetition maximizes concept retention.'
+                      : 'Upload your syllabus to unlock tailored AI study schedules.'}
                   </p>
                   <span className="text-right text-[10px] text-indigo-400 font-mono mt-1">✨</span>
                 </div>
@@ -429,69 +452,65 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
                       <Calendar className="w-4 h-4 text-cyan-400" />
                       <span>Upcoming Study Plan</span>
                     </div>
-                    <button
-                      onClick={() => onNavigate('master-schedule')}
-                      className="text-xs text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>View Full Plan</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
+                    {totalModulesCount > 0 && (
+                      <button
+                        onClick={() => onNavigate('master-schedule')}
+                        className="text-xs text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>View Full Plan</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
 
-                  <div className="space-y-2.5">
-                    {upcomingTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        onClick={() => toggleTaskCompletion(task.id)}
-                        className={`p-3 rounded-xl border flex items-center justify-between transition-all cursor-pointer ${
-                          completedTaskIds[task.id]
-                            ? 'bg-[#090f24]/50 border-emerald-500/30 opacity-70'
-                            : 'bg-[#0b132b]/80 border-sky-500/15 hover:border-cyan-400/40'
-                        }`}
-                      >
-                        <div className="flex items-start gap-2.5">
-                          <div
-                            className={`w-1.5 h-7 rounded-full mt-0.5 ${
-                              task.category === 'Operating Systems'
-                                ? 'bg-cyan-400'
-                                : task.category === 'Machine Learning'
-                                ? 'bg-purple-400'
-                                : task.category === 'Database Systems'
-                                ? 'bg-blue-400'
-                                : 'bg-amber-400'
-                            }`}
-                          />
-                          <div>
-                            <span className="text-[10px] text-slate-400 font-mono block">{task.time}</span>
-                            <span
-                              className={`text-xs font-semibold ${
-                                completedTaskIds[task.id] ? 'line-through text-slate-400' : 'text-slate-100'
-                              }`}
-                            >
-                              {task.title}
+                  {upcomingTasks.length > 0 ? (
+                    <div className="space-y-2.5">
+                      {upcomingTasks.map((task) => (
+                        <div
+                          key={task.id}
+                          onClick={() => toggleTaskCompletion(task.id)}
+                          className={`p-3 rounded-xl border flex items-center justify-between transition-all cursor-pointer ${
+                            completedTaskIds[task.id]
+                              ? 'bg-[#090f24]/50 border-emerald-500/30 opacity-70'
+                              : 'bg-[#0b132b]/80 border-sky-500/15 hover:border-cyan-400/40'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <div className="w-1.5 h-7 rounded-full mt-0.5 bg-cyan-400" />
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-mono block">{task.time}</span>
+                              <span
+                                className={`text-xs font-semibold ${
+                                  completedTaskIds[task.id] ? 'line-through text-slate-400' : 'text-slate-100'
+                                }`}
+                              >
+                                {task.title}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                              {task.category}
                             </span>
+                            <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
-                              task.category === 'Operating Systems'
-                                ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
-                                : task.category === 'Machine Learning'
-                                ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30'
-                                : task.category === 'Database Systems'
-                                ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30'
-                                : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                            }`}
-                          >
-                            {task.category}
-                          </span>
-                          <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center space-y-3">
+                      <p className="text-xs text-slate-400">
+                        No upcoming study tasks. Upload your syllabus to generate your customized study plan.
+                      </p>
+                      <button
+                        onClick={onOpenUploadModal || (() => onNavigate('step1-upload'))}
+                        className="px-4 py-2 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 text-xs font-semibold hover:bg-cyan-500/25 transition cursor-pointer"
+                      >
+                        Upload Syllabus Now
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Knowledge Coverage */}
@@ -502,61 +521,76 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
                       <span>Knowledge Coverage</span>
                     </div>
 
-                    <div className="flex items-center gap-6 my-2">
-                      {/* Circular Gauge */}
-                      <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
-                        <svg className="w-28 h-28 -rotate-90">
-                          <circle cx="56" cy="56" r="46" stroke="#1e293b" strokeWidth="8" fill="none" />
-                          <circle
-                            cx="56"
-                            cy="56"
-                            r="46"
-                            stroke="#00f0ff"
-                            strokeWidth="8"
-                            strokeDasharray="289"
-                            strokeDashoffset="63.5"
-                            strokeLinecap="round"
-                            fill="none"
-                          />
-                        </svg>
-                        <div className="absolute text-center">
-                          <span className="font-extrabold text-xl text-white">78%</span>
-                          <span className="text-[10px] text-slate-400 block font-mono">Covered</span>
+                    {totalModulesCount > 0 ? (
+                      <div className="flex items-center gap-6 my-2">
+                        {/* Circular Gauge */}
+                        <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
+                          <svg className="w-28 h-28 -rotate-90">
+                            <circle cx="56" cy="56" r="46" stroke="#1e293b" strokeWidth="8" fill="none" />
+                            <circle
+                              cx="56"
+                              cy="56"
+                              r="46"
+                              stroke="#00f0ff"
+                              strokeWidth="8"
+                              strokeDasharray="289"
+                              strokeDashoffset={289 - (289 * (overallCompletionPercentage || 0)) / 100}
+                              strokeLinecap="round"
+                              fill="none"
+                            />
+                          </svg>
+                          <div className="absolute text-center">
+                            <span className="font-extrabold text-xl text-white">
+                              {overallCompletionPercentage || 0}%
+                            </span>
+                            <span className="text-[10px] text-slate-400 block font-mono">Mastered</span>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Breakdown Bars */}
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center justify-between text-xs font-mono">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
-                            <span className="text-slate-300">High Priority</span>
+                        {/* Breakdown Bars */}
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center justify-between text-xs font-mono">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                              <span className="text-slate-300">Completed Units</span>
+                            </div>
+                            <span className="text-white font-bold">{completedModulesCount}</span>
                           </div>
-                          <span className="text-white font-bold">12 / 16</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs font-mono">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                            <span className="text-slate-300">Medium Priority</span>
+                          <div className="flex items-center justify-between text-xs font-mono">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                              <span className="text-slate-300">In Progress</span>
+                            </div>
+                            <span className="text-white font-bold">{inProgressModulesCount}</span>
                           </div>
-                          <span className="text-white font-bold">8 / 12</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs font-mono">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
-                            <span className="text-slate-300">Low Priority</span>
+                          <div className="flex items-center justify-between text-xs font-mono">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
+                              <span className="text-slate-300">Pending Units</span>
+                            </div>
+                            <span className="text-white font-bold">
+                              {totalModulesCount - completedModulesCount - inProgressModulesCount}
+                            </span>
                           </div>
-                          <span className="text-white font-bold">4 / 8</span>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="py-8 text-center space-y-2">
+                        <p className="text-xs text-slate-400">
+                          No curriculum data available to evaluate coverage.
+                        </p>
+                        <p className="text-[11px] text-slate-500 font-mono">
+                          Upload syllabus materials to view breakdown.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <button
                     onClick={() => onNavigate('dashboard')}
                     className="w-full mt-4 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-medium transition-all flex items-center justify-center gap-1 cursor-pointer"
                   >
-                    <span>View Detailed Coverage</span>
+                    <span>View Matrix Details</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -571,86 +605,65 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
                       <MessageSquare className="w-4 h-4 text-cyan-400" />
                       <span>Recent Conversations</span>
                     </div>
-                    <button
-                      onClick={() => setActiveTab('ai-tutor')}
-                      className="text-xs text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>View All</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
+                    {recentConversations.length > 0 && (
+                      <button
+                        onClick={() => setActiveTab('ai-tutor')}
+                        className="text-xs text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>View All</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
 
-                  <div className="space-y-2">
-                    <div
-                      onClick={() => setActiveTab('ai-tutor')}
-                      className="p-3 rounded-xl bg-[#0b132b]/80 border border-sky-500/15 hover:border-cyan-400/40 flex items-center justify-between transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                          <Shield className="w-3.5 h-3.5" />
-                        </div>
-                        <div>
-                          <span className="text-xs font-semibold text-white block">
-                            Network Security & Firewalls
+                  {recentConversations.length > 0 ? (
+                    <div className="space-y-2">
+                      {recentConversations.map((conv) => (
+                        <div
+                          key={conv.id}
+                          onClick={() => setActiveTab('ai-tutor')}
+                          className="p-3 rounded-xl bg-[#0b132b]/80 border border-sky-500/15 hover:border-cyan-400/40 flex items-center justify-between transition-all cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                              <Brain className="w-3.5 h-3.5" />
+                            </div>
+                            <div>
+                              <span className="text-xs font-semibold text-white block">
+                                {conv.title || 'Study Conversation'}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-mono truncate max-w-[200px] block">
+                                {conv.messages?.[conv.messages.length - 1]?.content?.slice(0, 50) || 'Recent message'}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            {new Date(conv.updatedAt).toLocaleDateString()}
                           </span>
-                          <span className="text-[10px] text-slate-400 font-mono truncate max-w-[200px] block">
-                            Explained packet filtering and NAT invariants...
-                          </span>
                         </div>
-                      </div>
-                      <span className="text-[10px] text-slate-500 font-mono">Today, 6:42 PM</span>
+                      ))}
                     </div>
-
-                    <div
-                      onClick={() => setActiveTab('ai-tutor')}
-                      className="p-3 rounded-xl bg-[#0b132b]/80 border border-sky-500/15 hover:border-cyan-400/40 flex items-center justify-between transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400">
-                          <GraduationCap className="w-3.5 h-3.5" />
-                        </div>
-                        <div>
-                          <span className="text-xs font-semibold text-white block">
-                            Linear Regression Doubts
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-mono truncate max-w-[200px] block">
-                            Helped with cost function and gradient descent...
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-slate-500 font-mono">Yesterday, 8:15 PM</span>
+                  ) : (
+                    <div className="py-8 text-center space-y-2">
+                      <p className="text-xs text-slate-400">No study conversations recorded yet.</p>
+                      <button
+                        onClick={() => setActiveTab('ai-tutor')}
+                        className="text-xs text-cyan-400 hover:text-cyan-300 font-mono"
+                      >
+                        Start a conversation with AI Tutor →
+                      </button>
                     </div>
-
-                    <div
-                      onClick={() => setActiveTab('ai-tutor')}
-                      className="p-3 rounded-xl bg-[#0b132b]/80 border border-sky-500/15 hover:border-cyan-400/40 flex items-center justify-between transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
-                          <Database className="w-3.5 h-3.5" />
-                        </div>
-                        <div>
-                          <span className="text-xs font-semibold text-white block">
-                            Database Normalization
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-mono truncate max-w-[200px] block">
-                            Covered 1NF, 2NF and 3NF with examples...
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-slate-500 font-mono">Oct 12, 2025</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
-                {/* Knowledge Base Card */}
+                {/* Knowledge Base Card (Truthful Document Counts) */}
                 <div className="cyber-card p-5">
                   <div className="flex items-center justify-between mb-3.5">
                     <div className="flex items-center gap-2 text-sm font-semibold text-white">
                       <BookOpen className="w-4 h-4 text-cyan-400" />
                       <span>Knowledge Base</span>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-medium">
-                        Indexed
+                      <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-[10px] font-mono font-medium">
+                        {knowledgeStats.totalDocuments} Docs
                       </span>
                     </div>
                     <button
@@ -668,11 +681,11 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
                         <div className="w-6 h-6 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400">
                           <FileText className="w-3.5 h-3.5" />
                         </div>
-                        <span className="text-xs font-semibold text-slate-200">Syllabus (PDF)</span>
+                        <span className="text-xs font-semibold text-slate-200">Syllabus Documents</span>
                       </div>
                       <span className="text-[11px] text-slate-400 font-mono">
-                        {knowledgeStats.categories.syllabus.count || 12} documents •{' '}
-                        {knowledgeStats.categories.syllabus.chunks || 48} chunks
+                        {knowledgeStats.categories.syllabus.count} documents •{' '}
+                        {knowledgeStats.categories.syllabus.chunks} chunks
                       </span>
                     </div>
 
@@ -681,11 +694,11 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
                         <div className="w-6 h-6 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400">
                           <FileText className="w-3.5 h-3.5" />
                         </div>
-                        <span className="text-xs font-semibold text-slate-200">Notes</span>
+                        <span className="text-xs font-semibold text-slate-200">Notes & Readings</span>
                       </div>
                       <span className="text-[11px] text-slate-400 font-mono">
-                        {knowledgeStats.categories.notes.count || 5} documents •{' '}
-                        {knowledgeStats.categories.notes.chunks || 22} chunks
+                        {knowledgeStats.categories.notes.count} documents •{' '}
+                        {knowledgeStats.categories.notes.chunks} chunks
                       </span>
                     </div>
 
@@ -694,11 +707,11 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
                         <div className="w-6 h-6 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-400">
                           <FileText className="w-3.5 h-3.5" />
                         </div>
-                        <span className="text-xs font-semibold text-slate-200">PPTs</span>
+                        <span className="text-xs font-semibold text-slate-200">Lecture Slides</span>
                       </div>
                       <span className="text-[11px] text-slate-400 font-mono">
-                        {knowledgeStats.categories.ppt.count || 3} documents •{' '}
-                        {knowledgeStats.categories.ppt.chunks || 18} chunks
+                        {knowledgeStats.categories.ppt.count} documents •{' '}
+                        {knowledgeStats.categories.ppt.chunks} chunks
                       </span>
                     </div>
 
@@ -707,11 +720,11 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
                         <div className="w-6 h-6 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">
                           <FileText className="w-3.5 h-3.5" />
                         </div>
-                        <span className="text-xs font-semibold text-slate-200">Web Resources</span>
+                        <span className="text-xs font-semibold text-slate-200">Web & Shared Content</span>
                       </div>
                       <span className="text-[11px] text-slate-400 font-mono">
-                        {knowledgeStats.categories.web.count || 7} documents •{' '}
-                        {knowledgeStats.categories.web.chunks || 31} chunks
+                        {knowledgeStats.categories.web.count} documents •{' '}
+                        {knowledgeStats.categories.web.chunks} chunks
                       </span>
                     </div>
                   </div>
@@ -723,17 +736,18 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
       </main>
 
       {/* ═══════════════════════════════════════════════════════════
-          3. RIGHT PANEL: DOCKED LIVE VOICE COACH (From Mockup)
+          3. RIGHT PANEL: DOCKED LIVE VOICE COACH
       ═══════════════════════════════════════════════════════════ */}
       {isVoiceCoachDocked && (
         <aside className="w-[360px] h-full p-4 shrink-0 bg-[#070b19] border-l border-sky-500/15 flex flex-col z-20">
           <VoiceCoachPanel
-            courseName={selectedCourse}
+            courseName={courseDisplayName}
             modules={modules}
             resources={resources}
             syllabusText={syllabusText}
             onMinimize={() => setIsVoiceCoachDocked(false)}
             onClose={() => setIsVoiceCoachDocked(false)}
+            onOpenApiKeyModal={onOpenApiKeyModal}
           />
         </aside>
       )}

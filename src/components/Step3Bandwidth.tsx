@@ -623,11 +623,11 @@ export const Step3Bandwidth: React.FC<Step3BandwidthProps> = ({ onNavigate, slot
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-mono font-semibold uppercase text-zinc-200 flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-primary text-base">fact_check</span>
-                  Daily Revision Goal
+                  <span className="material-symbols-outlined text-primary text-base">schedule</span>
+                  Maximum Daily Study Time
                 </h3>
                 <p className="text-xs text-zinc-400 mt-0.5">
-                  Target study hours each day for reviewing flashcards and practicing revision questions before rolling over
+                  Set the upper limit of focused study and review hours you can allocate per day
                 </p>
               </div>
               <span className="text-xs font-mono font-bold text-primary px-2.5 py-1 rounded bg-surface-container-high border border-primary/30">

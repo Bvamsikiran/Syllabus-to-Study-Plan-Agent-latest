@@ -139,9 +139,13 @@ export class GeminiLiveSession {
       fullSystemInstruction += '=== END CONVERSATION HISTORY ===\n';
     }
 
+    const modelPath = this.config.modelName.startsWith('models/')
+      ? this.config.modelName
+      : `models/${this.config.modelName}`;
+
     const setupPayload = {
       setup: {
-        model: `models/${this.config.modelName}`,
+        model: modelPath,
         generationConfig: {
           responseModalities: ['AUDIO'],
           speechConfig: {

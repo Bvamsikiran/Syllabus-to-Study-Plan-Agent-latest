@@ -28,9 +28,11 @@ export const Step2Exam: React.FC<Step2ExamProps> = ({
   setRetentionMode,
 }) => {
   const [courseName, setCourseName] = useState(
-    parsedData?.courseName || 'CS 3200: Distributed Systems & Engineering'
+    parsedData?.courseName || ''
   );
-  const [tags, setTags] = useState(['Computer Science', 'Systems Architecture', 'High-Yield 12-Week']);
+  const [tags, setTags] = useState<string[]>(() => {
+    return parsedData?.category ? [parsedData.category] : [];
+  });
   const [newTag, setNewTag] = useState('');
   const [showAddTag, setShowAddTag] = useState(false);
 

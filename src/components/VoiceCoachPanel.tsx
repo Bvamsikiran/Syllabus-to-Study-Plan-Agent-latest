@@ -22,6 +22,7 @@ import { SessionKnowledgeBase } from '../lib/knowledge';
 import { ragService } from '../services/ragService';
 import { saveVoiceSessionToFirestore } from '../services/firestoreService';
 import { useGoogleAuth } from '../context/GoogleAuthContext';
+import { apiKeyService } from '../services/apiKeyService';
 
 interface VoiceCoachPanelProps {
   courseName?: string;
@@ -31,16 +32,18 @@ interface VoiceCoachPanelProps {
   isDocked?: boolean;
   onMinimize?: () => void;
   onClose?: () => void;
+  onOpenApiKeyModal?: () => void;
 }
 
 export const VoiceCoachPanel: React.FC<VoiceCoachPanelProps> = ({
-  courseName = 'GATE CS & Data Science',
+  courseName = '',
   modules = [],
   resources = [],
   syllabusText = '',
   isDocked = true,
   onMinimize,
   onClose,
+  onOpenApiKeyModal,
 }) => {
   const { user } = useGoogleAuth();
 
@@ -49,61 +52,31 @@ export const VoiceCoachPanel: React.FC<VoiceCoachPanelProps> = ({
   const [statusDetail, setStatusDetail] = useState<string>('Ready to start oral voice session.');
   const [engineMode, setEngineMode] = useState<'gemini-live' | 'gemma-local'>('gemini-live');
   const [selectedGemmaModel, setSelectedGemmaModel] = useState<'gemma3:4b' | 'gemma-4:12b' | 'gemma-4:31b'>('gemma3:4b');
-  const [turns, setTurns] = useState<VoiceTurn[]>([
-    {
-      id: 'seed-turn-1',
-      role: 'user',
-      text: 'Can you explain what is meant by time complexity in data structures?',
-      timestamp: Date.now() - 60000,
-    },
-    {
-      id: 'seed-turn-2',
-      role: 'assistant',
-      text: 'Sure! Time complexity tells us how the running time of an algorithm grows with the size of the input. For example, searching in a balanced binary search tree is O(log n), while a linear search is O(n)...',
-      timestamp: Date.now() - 50000,
-      sources: [
-        {
-          id: 's1',
-          title: 'DSA_Notes.pdf',
-          filename: 'DSA_Notes.pdf',
-          page: 12,
-          section: 'Binary Search Trees',
-          snippet: 'Searching in balanced BST takes O(log n) time.',
-        },
-        {
-          id: 's2',
-          title: 'Algorithms_Chapter3.pdf',
-          filename: 'Algorithms_Chapter3.pdf',
-          page: 8,
-          section: 'Time Complexity',
-          snippet: 'Big-O notation specifies asymptotic upper bound.',
-        },
-      ],
-    },
-  ]);
+  const [turns, setTurns] = useState<VoiceTurn[]>([]);
 
   const [liveTranscript, setLiveTranscript] = useState<string>('');
   const [isLiveUser, setIsLiveUser] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [sessionId, setSessionId] = useState<string>(() => `voice_${Date.now()}`);
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(16);
-  const [totalSeconds, setTotalSeconds] = useState<number>(84);
-  const [activeSources, setActiveSources] = useState<GroundedSource[]>([
-    {
-      id: 'src-1',
-      title: 'DSA_Notes.pdf',
-      filename: 'DSA_Notes.pdf',
-      page: 12,
-      section: 'Binary Search Trees',
-    },
-    {
-      id: 'src-2',
-      title: 'Algorithms_Chapter3.pdf',
-      filename: 'Algorithms_Chapter3.pdf',
-      page: 8,
-      section: 'Time Complexity',
-    },
-  ]);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const [totalSeconds, setTotalSeconds] = useState<number>(0);
+  const [activeSources, setActiveSources] = useState<GroundedSource[]>([]);
+
+  // Sync active sources from real uploaded resources
+  useEffect(() => {
+    if (resources && resources.length > 0) {
+      setActiveSources(
+        resources.map((r, i) => ({
+          id: r.id || `src-${i}`,
+          title: r.title,
+          filename: r.title,
+          section: r.role || r.mappedInfo || 'Resource',
+        }))
+      );
+    } else {
+      setActiveSources([]);
+    }
+  }, [resources]);
 
   const liveSessionRef = useRef<GeminiLiveSession | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -144,16 +117,17 @@ export const VoiceCoachPanel: React.FC<VoiceCoachPanelProps> = ({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...apiKeyService.getAiHeaders(),
             ...(user ? { Authorization: `Bearer ${await user.getIdToken()}` } : {}),
           },
         });
 
         if (!tokenRes.ok) {
-          const errData = await tokenRes.json();
-          // Fallback seamlessly to Local Gemma Dual-Engine
-          console.warn('[VoiceCoach] Live S2S token unavailable, switching to Local Gemma Engine:', errData.error);
-          setEngineMode('gemma-local');
-          startLocalGemmaVoice();
+          const errData = await tokenRes.json().catch(() => ({}));
+          const errMsg = errData.message || errData.error || 'Live voice session unavailable. Please configure your Gemini API key.';
+          console.warn('[VoiceCoach] Live S2S token unavailable:', errMsg);
+          setStatusDetail(errMsg);
+          setSessionStatus('error');
           return;
         }
 
@@ -170,9 +144,9 @@ export const VoiceCoachPanel: React.FC<VoiceCoachPanelProps> = ({
 
         const liveSession = new GeminiLiveSession({
           ephemeralToken: token,
-          modelName: model || 'gemini-2.5-flash',
+          modelName: model || 'gemini-3.8-live',
           voiceName: 'Puck',
-          systemInstruction: `You are Synapse AI's real-time spoken Voice Study Coach for ${courseName}. Speak concisely and conversationally. Answer using the student's uploaded syllabus and notes.`,
+          systemInstruction: `You are Synapse AI's real-time spoken Voice Study Coach for ${courseName || 'your coursework'}. Speak concisely and conversationally. Answer using the student's uploaded syllabus and notes.`,
           knowledgeBase: kb,
           onStatusChange: (status, detail) => {
             setSessionStatus(status);
@@ -540,37 +514,45 @@ export const VoiceCoachPanel: React.FC<VoiceCoachPanelProps> = ({
 
         {/* Transcript Conversation Bubbles */}
         <div className="flex-1 overflow-y-auto space-y-3 no-scrollbar pr-1">
-          {turns.slice(-6).map((turn) => (
-            <div key={turn.id} className="text-xs">
-              <div className="flex items-center gap-1.5 mb-1 text-[10px] font-mono text-slate-400">
-                {turn.role === 'user' ? (
-                  <>
-                    <span className="w-4 h-4 rounded-full bg-slate-700 flex items-center justify-center text-[9px] text-white font-bold">
-                      Y
-                    </span>
-                    <span className="text-slate-300 font-medium">You</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-4 h-4 rounded-full bg-cyan-600 flex items-center justify-center text-[9px] text-white">
-                      <Sparkles className="w-2.5 h-2.5" />
-                    </div>
-                    <span className="text-cyan-400 font-medium">Synapse AI</span>
-                  </>
-                )}
-                <span className="text-slate-500">00:{Math.floor((turn.timestamp % 60000) / 1000)}</span>
-              </div>
-              <div
-                className={`p-2.5 rounded-xl leading-relaxed ${
-                  turn.role === 'user'
-                    ? 'bg-slate-800/80 text-slate-200 border border-slate-700/60'
-                    : 'bg-[#101b3d]/80 text-cyan-100/90 border border-cyan-500/20'
-                }`}
-              >
-                {turn.text}
-              </div>
+          {turns.length === 0 && !liveTranscript ? (
+            <div className="h-full min-h-[140px] flex flex-col items-center justify-center text-center p-4 text-slate-400">
+              <Mic className="w-6 h-6 text-slate-600 mb-2" />
+              <p className="text-xs text-slate-400">No voice session active.</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Click Start Session above to speak with your AI Study Coach.</p>
             </div>
-          ))}
+          ) : (
+            turns.slice(-6).map((turn) => (
+              <div key={turn.id} className="text-xs">
+                <div className="flex items-center gap-1.5 mb-1 text-[10px] font-mono text-slate-400">
+                  {turn.role === 'user' ? (
+                    <>
+                      <span className="w-4 h-4 rounded-full bg-slate-700 flex items-center justify-center text-[9px] text-white font-bold">
+                        Y
+                      </span>
+                      <span className="text-slate-300 font-medium">You</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-4 h-4 rounded-full bg-cyan-600 flex items-center justify-center text-[9px] text-white">
+                        <Sparkles className="w-2.5 h-2.5" />
+                      </div>
+                      <span className="text-cyan-400 font-medium">Synapse AI</span>
+                    </>
+                  )}
+                  <span className="text-slate-500">00:{Math.floor((turn.timestamp % 60000) / 1000)}</span>
+                </div>
+                <div
+                  className={`p-2.5 rounded-xl leading-relaxed ${
+                    turn.role === 'user'
+                      ? 'bg-slate-800/80 text-slate-200 border border-slate-700/60'
+                      : 'bg-[#101b3d]/80 text-cyan-100/90 border border-cyan-500/20'
+                  }`}
+                >
+                  {turn.text}
+                </div>
+              </div>
+            ))
+          )}
 
           {/* Live Interim Streaming Bubble */}
           {liveTranscript && (
@@ -596,26 +578,25 @@ export const VoiceCoachPanel: React.FC<VoiceCoachPanelProps> = ({
             <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
             <span>Grounded Sources</span>
           </div>
-          <span className="text-[10px] text-cyan-400 hover:text-cyan-300 font-mono cursor-pointer flex items-center gap-0.5">
-            View All
-            <ChevronRight className="w-3 h-3" />
-          </span>
         </div>
 
         <div className="flex flex-wrap gap-1.5">
-          {activeSources.map((source, idx) => (
-            <div
-              key={idx}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0e1938] border border-cyan-500/20 text-[11px] text-slate-300 font-mono hover:border-cyan-400/40 transition-colors cursor-pointer"
-            >
-              <FileText className="w-3 h-3 text-cyan-400" />
-              <span className="truncate max-w-[130px]">{source.filename}</span>
-              {source.page && <span className="text-slate-500 text-[10px]">p.{source.page}</span>}
-            </div>
-          ))}
-          <span className="px-2 py-1 rounded-lg bg-slate-800/60 border border-slate-700 text-[10px] text-slate-400 font-mono">
-            +1 more
-          </span>
+          {activeSources.length === 0 ? (
+            <span className="text-[11px] text-slate-500 font-mono italic">
+              No study sources attached yet. Upload resources in Study Hub.
+            </span>
+          ) : (
+            activeSources.map((source, idx) => (
+              <div
+                key={idx}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0e1938] border border-cyan-500/20 text-[11px] text-slate-300 font-mono hover:border-cyan-400/40 transition-colors"
+              >
+                <FileText className="w-3 h-3 text-cyan-400" />
+                <span className="truncate max-w-[150px]">{source.filename || source.title}</span>
+                {source.section && <span className="text-slate-500 text-[10px] truncate max-w-[80px]">({source.section})</span>}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
