@@ -2,15 +2,28 @@ import React from 'react';
 import { ScreenId } from '../types';
 import { GoogleAuthButton } from './GoogleAuthButton';
 import { useGoogleAuth } from '../context/GoogleAuthContext';
-import { HardDrive, Mail, Presentation, FileQuestion, Sparkles, Brain } from 'lucide-react';
+import { HardDrive, Mail, Presentation, FileQuestion, Sparkles, Brain, Key } from 'lucide-react';
+import { apiKeyService } from '../services/apiKeyService';
 
 interface NavigationHeaderProps {
   currentScreen: ScreenId;
   onNavigate: (screen: ScreenId) => void;
+  onOpenApiKeyModal?: () => void;
 }
 
-export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ currentScreen, onNavigate }) => {
+export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
+  currentScreen,
+  onNavigate,
+  onOpenApiKeyModal,
+}) => {
   const [collapsed, setCollapsed] = React.useState(false);
+  const [hasKey, setHasKey] = React.useState(apiKeyService.hasKey());
+
+  React.useEffect(() => {
+    return apiKeyService.subscribe((key) => {
+      setHasKey(Boolean(key));
+    });
+  }, []);
   const { setDriveModalOpen, setSlidesModalOpen, setFormsModalOpen, setGmailModalOpen } = useGoogleAuth();
 
   const screens: { id: ScreenId; label: string; tag: string }[] = [
@@ -28,6 +41,18 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ currentScree
   if (collapsed) {
     return (
       <div className="fixed top-2 right-2 z-50 flex items-center gap-2">
+        <button
+          onClick={onOpenApiKeyModal}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-xs font-mono backdrop-blur-md shadow-2xl cursor-pointer ${
+            hasKey
+              ? 'bg-[#0b132b]/95 border-cyan-400/40 text-cyan-300 hover:bg-[#131f42]'
+              : 'bg-[#0b132b]/95 border-amber-400/40 text-amber-300 hover:bg-[#131f42]'
+          }`}
+          title="Gemini API Key"
+        >
+          <Key className="w-3.5 h-3.5" />
+          <span>{hasKey ? 'Key ✓' : 'Set Key'}</span>
+        </button>
         <GoogleAuthButton />
         <button
           onClick={() => setCollapsed(false)}
@@ -109,6 +134,19 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ currentScree
         >
           <Mail className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Gmail</span>
+        </button>
+
+        <button
+          onClick={onOpenApiKeyModal}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border transition-all font-sans text-xs font-medium cursor-pointer ${
+            hasKey
+              ? 'bg-cyan-500/15 border-cyan-400/40 text-cyan-300 hover:bg-cyan-500/25'
+              : 'bg-amber-500/15 border-amber-400/40 text-amber-300 hover:bg-amber-500/25'
+          }`}
+          title="Configure Gemini API Key for Voice Coach & AI"
+        >
+          <Key className="w-3.5 h-3.5" />
+          <span>{hasKey ? 'Gemini Key ✓' : 'Set Gemini Key'}</span>
         </button>
 
         <div className="border-l border-sky-500/20 pl-2">

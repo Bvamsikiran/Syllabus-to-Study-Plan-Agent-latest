@@ -16,13 +16,14 @@ import { Step4Resources } from './components/Step4Resources';
 import { ModernStudyDashboard } from './components/ModernStudyDashboard';
 import { VoiceStudyCoach } from './components/VoiceStudyCoach';
 import { GenerativeAITutor } from './components/GenerativeAITutor';
+import { ApiKeyModal } from './components/ApiKeyModal';
+import { apiKeyService } from './services/apiKeyService';
 import { GoogleAuthProviderComponent, useGoogleAuth } from './context/GoogleAuthContext';
 import { GoogleDriveModal } from './components/GoogleDriveModal';
 import { GoogleSlidesModal } from './components/GoogleSlidesModal';
 import { GoogleFormsModal } from './components/GoogleFormsModal';
 import { GmailSyncModal } from './components/GmailSyncModal';
 import {
-  testFirestoreConnection,
   saveStudyPlanToFirestore,
   saveUserProfile,
   getLatestStudyPlanFromFirestore,
@@ -49,37 +50,23 @@ function AppContent() {
   };
 
   const [currentScreen, setCurrentScreen] = useState<ScreenId>(getInitialScreen);
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState<boolean>(false);
 
-  // Global state across onboarding & planner
+  // Global state across onboarding & planner — strictly starts empty
   const [syllabusText, setSyllabusText] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [parsedData, setParsedData] = useState<any>(null);
-  const [targetDate, setTargetDate] = useState<string>('2026-02-07');
-  const [targetScore, setTargetScore] = useState<number>(85);
-  const [retentionMode, setRetentionMode] = useState<'aggressive' | 'balanced'>('aggressive');
+  const [targetDate, setTargetDate] = useState<string>('');
+  const [targetScore, setTargetScore] = useState<number>(0);
+  const [retentionMode, setRetentionMode] = useState<'aggressive' | 'balanced'>('balanced');
 
-  // Bandwidth slots
-  const [slots, setSlots] = useState<Record<string, ScheduleSlot>>(() => {
-    const initial: Record<string, ScheduleSlot> = {
-      'mon-morning': { day: 'mon', timeBlock: 'morning', type: 'focus', hours: 4.0, label: 'Active Focus', sublabel: 'Core Syllabus' },
-      'wed-morning': { day: 'wed', timeBlock: 'morning', type: 'focus', hours: 4.0, label: 'Active Focus', sublabel: 'Problem Sets' },
-      'sat-morning': { day: 'sat', timeBlock: 'morning', type: 'focus', hours: 4.0, label: 'Active Focus', sublabel: 'Mock Testing' },
+  // Bandwidth slots — starts empty unless user configures or loads saved profile
+  const [slots, setSlots] = useState<Record<string, ScheduleSlot>>({});
 
-      'tue-afternoon': { day: 'tue', timeBlock: 'afternoon', type: 'focus', hours: 4.0, label: 'Active Focus', sublabel: 'Deep Review' },
-      'sun-afternoon': { day: 'sun', timeBlock: 'afternoon', type: 'buffer', hours: 3.0, label: 'Adaptive Buffer', sublabel: 'AI Auto-Heals' },
-
-      'mon-evening': { day: 'mon', timeBlock: 'evening', type: 'spaced', hours: 1.5, label: 'Flashcards', sublabel: 'Spaced Recall' },
-      'wed-evening': { day: 'wed', timeBlock: 'evening', type: 'spaced', hours: 1.5, label: 'Flashcards', sublabel: 'Active Recall' },
-      'thu-evening': { day: 'thu', timeBlock: 'evening', type: 'spaced', hours: 1.5, label: 'Quiz Sprint', sublabel: 'Quick Checks' },
-      'sun-evening': { day: 'sun', timeBlock: 'evening', type: 'spaced', hours: 2.0, label: 'Weekly Prep', sublabel: 'Diagnostic Run' },
-    };
-    return initial;
-  });
-
-  // Attached study resources
+  // Attached study resources — starts empty unless uploaded or saved
   const [resources, setResources] = useState<ResourceItem[]>(INITIAL_RESOURCES);
 
-  // Active course modules
+  // Active course modules — starts empty unless parsed or saved
   const [modules, setModules] = useState<SyllabusModule[]>(INITIAL_MODULES);
 
   // Google Workspace modals & auth
@@ -95,12 +82,8 @@ function AppContent() {
     user,
   } = useGoogleAuth();
 
-  // Test Firestore connection on boot safely
-  useEffect(() => {
-    testFirestoreConnection().catch(() => {});
-  }, []);
-
-  // Load user profile & saved study plan from Firestore on authentication
+  // Load user profile & saved study plan from Firestore on authentication;
+  // Clear previous state on logout to prevent cross-account leakage.
   useEffect(() => {
     if (user) {
       getUserProfile()
@@ -130,12 +113,22 @@ function AppContent() {
           }
         })
         .catch(() => {});
+    } else {
+      // Clear data on sign out
+      setModules([]);
+      setResources([]);
+      setParsedData(null);
+      setSlots({});
+      setTargetDate('');
+      setTargetScore(0);
+      setSyllabusText('');
+      setSelectedFile(null);
     }
   }, [user]);
 
-  // Save profile state to Firestore when user or goals change
+  // Save profile state to Firestore when user or goals change (only if values are valid)
   useEffect(() => {
-    if (user) {
+    if (user && targetDate) {
       saveUserProfile({
         targetDate,
         targetScore,
@@ -179,26 +172,27 @@ function AppContent() {
   const handleSyllabusParsed = (data: any) => {
     setParsedData(data);
     if (data.units && data.units.length > 0) {
+      // Initialize modules cleanly with 0 progress and pending status
       const converted: SyllabusModule[] = data.units.map((u: any, idx: number) => ({
         id: u.id || `unit-${idx}`,
         name: u.name,
         submodulesCount: u.submodulesCount || 4,
-        weight: u.weight || 20,
-        topics: u.topics || ['Lecture Core'],
-        completedUnits: idx === 0 ? 4 : idx === 1 ? 3 : 0,
-        totalUnits: 4,
-        reference: u.reference || 'Syllabus Assigned',
-        status: idx < 2 ? 'completed' : idx === 2 ? 'in-progress' : 'pending',
-        progress: idx === 0 ? 100 : idx === 1 ? 100 : idx === 2 ? 60 : 0,
-        priority: u.priority || (idx < 2 ? 'high' : 'medium'),
-        category: u.category || 'Core Syllabus',
+        weight: u.weight || 10,
+        topics: u.topics || [],
+        completedUnits: 0,
+        totalUnits: u.submodulesCount || 4,
+        reference: u.reference || '',
+        status: 'pending',
+        progress: 0,
+        priority: u.priority || 'medium',
+        category: u.category || 'General',
       }));
       setModules(converted);
 
       // Save to Firebase Firestore if logged in
       if (user) {
         saveStudyPlanToFirestore({
-          courseName: data.courseName || 'GATE 2026: Computer Science & Data Science',
+          courseName: data.courseName || 'Imported Course Syllabus',
           units: converted,
           milestones: data.milestones,
           pacing: data.pacing,
@@ -216,12 +210,12 @@ function AppContent() {
     try {
       const res = await fetch('/api/analyze-syllabus', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: apiKeyService.getAiHeaders(),
         body: JSON.stringify({ text, fileName }),
       });
       if (res.ok) {
         const data = await res.json();
-        handleSyllabusParsed(data);
+        handleSyllabusParsed(data.data || data);
       }
     } catch (e) {
       console.warn('Auto parsing error on Drive import:', e);
@@ -236,12 +230,12 @@ function AppContent() {
     try {
       const res = await fetch('/api/analyze-syllabus', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: apiKeyService.getAiHeaders(),
         body: JSON.stringify({ text, fileName: presentationTitle }),
       });
       if (res.ok) {
         const data = await res.json();
-        handleSyllabusParsed(data);
+        handleSyllabusParsed(data.data || data);
       }
     } catch (e) {
       console.warn('Auto parsing error on Slides import:', e);
@@ -256,12 +250,12 @@ function AppContent() {
     try {
       const res = await fetch('/api/analyze-syllabus', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: apiKeyService.getAiHeaders(),
         body: JSON.stringify({ text, fileName: subject }),
       });
       if (res.ok) {
         const data = await res.json();
-        handleSyllabusParsed(data);
+        handleSyllabusParsed(data.data || data);
       }
     } catch (e) {
       console.warn('Auto parsing error on Gmail import:', e);
@@ -271,7 +265,11 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-[#070b19] text-slate-100 flex flex-col font-sans">
       {/* Dev & Navigation Quick Switcher Banner */}
-      <NavigationHeader currentScreen={currentScreen} onNavigate={navigateTo} />
+      <NavigationHeader
+        currentScreen={currentScreen}
+        onNavigate={navigateTo}
+        onOpenApiKeyModal={() => setApiKeyModalOpen(true)}
+      />
 
       {/* Screen Render */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -285,7 +283,7 @@ function AppContent() {
             targetDate={targetDate}
             targetScore={targetScore}
             retentionMode={retentionMode}
-            courseName={parsedData?.courseName || 'GATE 2026: Computer Science & Data Science'}
+            courseName={parsedData?.courseName || ''}
           />
         )}
 
@@ -323,11 +321,11 @@ function AppContent() {
             resources={resources}
             setResources={setResources}
             modules={modules}
-            courseName={parsedData?.courseName || 'GATE 2026: Computer Science & Data Science'}
+            courseName={parsedData?.courseName || ''}
           />
         )}
 
-        {/* Dashboard matching screenshot mockup */}
+        {/* Unified Dashboard */}
         {(currentScreen === 'dashboard' || currentScreen === 'overview') && (
           <ModernStudyDashboard
             currentScreen={currentScreen}
@@ -337,13 +335,14 @@ function AppContent() {
             syllabusText={syllabusText}
             onOpenUploadModal={() => navigateTo('step1-upload')}
             onOpenResourceModal={() => navigateTo('step4-resources')}
+            onOpenApiKeyModal={() => setApiKeyModalOpen(true)}
           />
         )}
 
         {currentScreen === 'ai-tutor' && (
           <div className="flex-1 p-6 bg-[#070b19]">
             <GenerativeAITutor
-              courseContext={parsedData?.courseName || 'GATE CS & Data Science'}
+              courseContext={parsedData?.courseName || 'Study Subject'}
               onNavigateToKnowledgeBase={() => navigateTo('step4-resources')}
             />
           </div>
@@ -353,12 +352,19 @@ function AppContent() {
           <VoiceStudyCoach
             onNavigate={navigateTo}
             modules={modules}
-            courseName={parsedData?.courseName || 'GATE 2026: Computer Science & Data Science'}
+            courseName={parsedData?.courseName || 'Study Subject'}
             resources={resources}
             syllabusText={syllabusText}
+            onOpenApiKeyModal={() => setApiKeyModalOpen(true)}
           />
         )}
       </div>
+
+      {/* Gemini API Key Modal */}
+      <ApiKeyModal
+        isOpen={apiKeyModalOpen}
+        onClose={() => setApiKeyModalOpen(false)}
+      />
 
       {/* Google Drive Workspace Modal */}
       <GoogleDriveModal

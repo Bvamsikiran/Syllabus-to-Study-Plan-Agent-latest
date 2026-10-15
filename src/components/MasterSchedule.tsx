@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ScreenId, SyllabusModule, ScheduleSlot } from '../types';
+import { apiKeyService } from '../services/apiKeyService';
 
 interface MasterScheduleProps {
   onNavigate: (screen: ScreenId) => void;
@@ -15,10 +16,10 @@ export const MasterSchedule: React.FC<MasterScheduleProps> = ({
   onNavigate,
   modules = [],
   slots = {},
-  targetDate = '2025-11-28',
-  targetScore = 95,
+  targetDate = '',
+  targetScore = 0,
   retentionMode = 'aggressive',
-  courseName = 'Distributed Systems & Engineering',
+  courseName = '',
 }) => {
   const [scheduleData, setScheduleData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,11 +32,18 @@ export const MasterSchedule: React.FC<MasterScheduleProps> = ({
 
   // Load dynamic schedule from backend
   const fetchSchedule = async () => {
+    if (!modules || modules.length === 0) {
+      setScheduleData(null);
+      return;
+    }
     setIsLoading(true);
     try {
       const res = await fetch('/api/generate-schedule', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...apiKeyService.getAiHeaders(),
+        },
         body: JSON.stringify({
           units: modules,
           bandwidthSlots: slots,
@@ -59,7 +67,11 @@ export const MasterSchedule: React.FC<MasterScheduleProps> = ({
   };
 
   useEffect(() => {
-    fetchSchedule();
+    if (modules && modules.length > 0) {
+      fetchSchedule();
+    } else {
+      setScheduleData(null);
+    }
   }, [modules, slots, targetDate, targetScore, retentionMode, courseName]);
 
   const handleRecalibrate = async () => {
@@ -213,8 +225,8 @@ export const MasterSchedule: React.FC<MasterScheduleProps> = ({
               Ψ
             </div>
             <div className="flex flex-col truncate">
-              <span className="text-xs font-semibold text-on-surface truncate">{courseName}</span>
-              <span className="text-[11px] font-mono text-on-surface-variant truncate">Target: {targetDate}</span>
+              <span className="text-xs font-semibold text-on-surface truncate">{courseName || 'Study Plan'}</span>
+              <span className="text-[11px] font-mono text-on-surface-variant truncate">{targetDate ? `Target: ${targetDate}` : 'Target: Unset'}</span>
             </div>
           </div>
         </div>
@@ -323,16 +335,19 @@ export const MasterSchedule: React.FC<MasterScheduleProps> = ({
               <div className="my-2">
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-headline text-on-surface font-bold tracking-tight">
-                    {scheduleData?.summary?.countdownDays ?? 52}
+                    {scheduleData?.summary?.countdownDays !== undefined ? scheduleData.summary.countdownDays : '—'}
                   </span>
                   <span className="text-xs font-mono text-outline">DAYS TO GO</span>
                 </div>
                 <span className="text-[11px] font-mono text-on-surface-variant font-medium">
-                  Target Score: {targetScore} • {targetDate}
+                  {targetScore ? `Target Score: ${targetScore}` : 'Target Score Unset'}{targetDate ? ` • ${targetDate}` : ''}
                 </span>
               </div>
               <div className="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden mt-1">
-                <div className="bg-primary h-full rounded-full" style={{ width: '65%' }}></div>
+                <div
+                  className="bg-primary h-full rounded-full transition-all"
+                  style={{ width: scheduleData?.summary?.countdownDays !== undefined ? '65%' : '0%' }}
+                ></div>
               </div>
             </div>
 
@@ -345,27 +360,27 @@ export const MasterSchedule: React.FC<MasterScheduleProps> = ({
               <div className="my-2">
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-headline text-on-surface font-bold tracking-tight">
-                    {scheduleData?.summary?.weeklyHours ?? 22.5}
+                    {scheduleData?.summary?.weeklyHours !== undefined ? scheduleData.summary.weeklyHours : '—'}
                   </span>
                   <span className="text-xs font-mono text-outline">
-                    / {scheduleData?.summary?.maxCapacity ?? 28} HRS
+                    / {scheduleData?.summary?.maxCapacity !== undefined ? `${scheduleData.summary.maxCapacity} HRS` : '— HRS'}
                   </span>
                 </div>
                 <span className="text-[11px] font-mono text-tertiary font-medium">
-                  {scheduleData?.summary?.bufferHours ?? 4.5} hrs buffer preserved
+                  {scheduleData?.summary?.bufferHours !== undefined ? `${scheduleData.summary.bufferHours} hrs buffer preserved` : 'Buffer unallocated'}
                 </span>
               </div>
               <div className="space-y-1 mt-1">
                 <div className="flex justify-between text-[11px] font-mono text-on-surface-variant">
                   <span>Capacity Utilized</span>
                   <span className="text-on-surface font-medium">
-                    {scheduleData?.summary?.capacityUtilized ?? 80}%
+                    {scheduleData?.summary?.capacityUtilized !== undefined ? `${scheduleData.summary.capacityUtilized}%` : '—%'}
                   </span>
                 </div>
                 <div className="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-secondary-fixed rounded-full"
-                    style={{ width: `${scheduleData?.summary?.capacityUtilized ?? 80}%` }}
+                    className="h-full bg-secondary-fixed rounded-full transition-all"
+                    style={{ width: `${scheduleData?.summary?.capacityUtilized || 0}%` }}
                   ></div>
                 </div>
               </div>
@@ -380,22 +395,22 @@ export const MasterSchedule: React.FC<MasterScheduleProps> = ({
               <div className="my-2">
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-headline text-on-surface font-bold tracking-tight">
-                    {scheduleData?.summary?.todayBlocksCount ?? 3}
+                    {scheduleData?.summary?.todayBlocksCount !== undefined ? scheduleData.summary.todayBlocksCount : '—'}
                   </span>
                   <span className="text-xs font-mono text-on-surface-variant">
-                    BLOCKS ({scheduleData?.summary?.todayHours ?? '3h 30m'})
+                    {scheduleData?.summary?.todayHours ? `BLOCKS (${scheduleData.summary.todayHours})` : 'BLOCKS (—)'}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
+                  <span className={`h-1.5 w-1.5 rounded-full ${scheduleData ? 'bg-primary' : 'bg-outline'}`}></span>
                   <span className="text-[11px] text-on-surface-variant">
-                    Cognitive Effort: <strong className="text-on-surface font-medium">Calibrated</strong>
+                    Cognitive Effort: <strong className="text-on-surface font-medium">{scheduleData ? 'Calibrated' : 'Unset'}</strong>
                   </span>
                 </div>
               </div>
               <div className="flex items-center gap-1 text-[11px] font-mono text-outline mt-1">
-                <span className="material-symbols-outlined text-xs text-tertiary">check_circle</span>
-                <span>Active session in progress</span>
+                <span className={`material-symbols-outlined text-xs ${scheduleData ? 'text-tertiary' : 'text-outline'}`}>check_circle</span>
+                <span>{scheduleData ? 'Active schedule synthesized' : 'No schedule generated'}</span>
               </div>
             </div>
 
@@ -408,237 +423,258 @@ export const MasterSchedule: React.FC<MasterScheduleProps> = ({
               <div className="my-2">
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-headline text-tertiary font-bold tracking-tight">
-                    {scheduleData?.summary?.retentionVelocity ?? 94}%
+                    {scheduleData?.summary?.retentionVelocity !== undefined ? `${scheduleData.summary.retentionVelocity}%` : '—%'}
                   </span>
                   <span className="text-xs font-mono text-on-surface-variant">RETENTION</span>
                 </div>
-                <span className="text-[11px] font-mono text-tertiary-fixed-dim">Spaced Repetition sync active</span>
+                <span className="text-[11px] font-mono text-tertiary-fixed-dim">
+                  {scheduleData ? 'Spaced Repetition sync active' : 'Awaiting syllabus input'}
+                </span>
               </div>
               <div className="space-y-1 mt-1">
                 <div className="flex justify-between text-[11px] font-mono text-on-surface-variant">
                   <span>Forgetting Curve Safety</span>
-                  <span className="text-tertiary font-medium">High Margin</span>
+                  <span className="text-tertiary font-medium">{scheduleData ? 'High Margin' : '—'}</span>
                 </div>
                 <div className="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-tertiary rounded-full"
-                    style={{ width: `${scheduleData?.summary?.retentionVelocity ?? 94}%` }}
+                    className="h-full bg-tertiary rounded-full transition-all"
+                    style={{ width: `${scheduleData?.summary?.retentionVelocity || 0}%` }}
                   ></div>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Main 8-Col + 4-Col Grid */}
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-            {/* 8 Cols: Interactive Weekly Timeline */}
-            <section className="xl:col-span-8 flex flex-col gap-4">
-              {/* Controls Strip */}
-              <div className="p-3.5 rounded-lg bg-surface-container-low border border-outline-variant backdrop-blur-md flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center bg-surface-container-highest p-1 rounded-lg border border-outline-variant">
-                  <button className="px-3 py-1.5 rounded-md bg-surface-container-high text-on-surface text-xs shadow-sm font-semibold flex items-center gap-1.5 border border-outline-variant">
-                    <span className="material-symbols-outlined text-sm">view_week</span>
-                    Weekly Timeline
-                  </button>
-                  <button
-                    onClick={() => onNavigate('dashboard')}
-                    className="px-3 py-1.5 rounded-md text-on-surface-variant hover:text-on-surface text-xs transition-colors flex items-center gap-1.5"
-                  >
-                    <span className="material-symbols-outlined text-sm">calendar_view_day</span>
-                    Course Modules
-                  </button>
-                </div>
-
-                {/* Filters */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[11px] font-mono text-outline mr-1">FILTER:</span>
-                  <button
-                    onClick={() => setFilterSubject('all')}
-                    className={`px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-colors cursor-pointer ${
-                      filterSubject === 'all'
-                        ? 'bg-primary text-on-primary font-bold'
-                        : 'bg-surface-container-highest text-on-surface-variant border border-outline-variant'
-                    }`}
-                  >
-                    All Units
-                  </button>
-                  {availableSubjects.slice(0, 4).map((subj) => (
+          {/* Main 8-Col + 4-Col Grid or Empty State */}
+          {(!modules || modules.length === 0) ? (
+            <div className="rounded-2xl bg-surface-container-low border border-outline-variant p-10 flex flex-col items-center justify-center text-center my-6">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/25 flex items-center justify-center mb-4 text-primary">
+                <span className="material-symbols-outlined !text-3xl">calendar_month</span>
+              </div>
+              <h3 className="text-base font-bold text-white mb-2">No Active Study Schedule</h3>
+              <p className="text-xs text-on-surface-variant max-w-md mb-6 leading-relaxed">
+                Adaptive weekly schedules are synthesized directly from your verified syllabus units and preferred study bandwidth. Upload your syllabus to generate your plan.
+              </p>
+              <button
+                onClick={() => onNavigate('step1-upload')}
+                className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-fixed text-on-primary text-xs font-bold transition-all shadow-md shadow-primary/25 flex items-center gap-2 cursor-pointer"
+              >
+                <span className="material-symbols-outlined !text-base">upload_file</span>
+                <span>Upload Syllabus to Begin</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+              {/* 8 Cols: Interactive Weekly Timeline */}
+              <section className="xl:col-span-8 flex flex-col gap-4">
+                {/* Controls Strip */}
+                <div className="p-3.5 rounded-lg bg-surface-container-low border border-outline-variant backdrop-blur-md flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center bg-surface-container-highest p-1 rounded-lg border border-outline-variant">
+                    <button className="px-3 py-1.5 rounded-md bg-surface-container-high text-on-surface text-xs shadow-sm font-semibold flex items-center gap-1.5 border border-outline-variant">
+                      <span className="material-symbols-outlined text-sm">view_week</span>
+                      Weekly Timeline
+                    </button>
                     <button
-                      key={subj}
-                      onClick={() => setFilterSubject(filterSubject === subj ? 'all' : subj)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-colors cursor-pointer truncate max-w-[140px] ${
-                        filterSubject === subj
+                      onClick={() => onNavigate('dashboard')}
+                      className="px-3 py-1.5 rounded-md text-on-surface-variant hover:text-on-surface text-xs transition-colors flex items-center gap-1.5"
+                    >
+                      <span className="material-symbols-outlined text-sm">calendar_view_day</span>
+                      Course Modules
+                    </button>
+                  </div>
+
+                  {/* Filters */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-mono text-outline mr-1">FILTER:</span>
+                    <button
+                      onClick={() => setFilterSubject('all')}
+                      className={`px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-colors cursor-pointer ${
+                        filterSubject === 'all'
                           ? 'bg-primary text-on-primary font-bold'
-                          : 'bg-primary/10 text-primary border border-primary/30'
+                          : 'bg-surface-container-highest text-on-surface-variant border border-outline-variant'
                       }`}
                     >
-                      {subj}
+                      All Units
                     </button>
-                  ))}
-                </div>
-
-                {/* Spaced Toggle */}
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showSpaced}
-                    onChange={(e) => setShowSpaced(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-8 h-4 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-zinc-700 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary relative border border-outline-variant"></div>
-                  <span className="text-xs text-on-surface-variant">Show Spaced Repetition</span>
-                </label>
-              </div>
-
-              {/* 7-Day Calendar Grid */}
-              <div className="rounded-lg bg-surface-container-low border border-outline-variant overflow-hidden backdrop-blur-md shadow-sm">
-                <div className="grid grid-cols-7 border-b border-outline-variant bg-surface-container-high/60 text-center divide-x divide-outline-variant">
-                  {daysKeys.map((dayKey) => {
-                    const day = scheduleData?.days?.[dayKey];
-                    const isToday = day?.isToday;
-                    return (
-                      <div
-                        key={dayKey}
-                        className={`py-2.5 px-1 ${isToday ? 'bg-surface-container-highest border-b-2 border-primary' : ''}`}
-                      >
-                        <div className={`text-[11px] font-mono ${isToday ? 'text-primary font-bold' : 'text-outline'}`}>
-                          {day?.dayName || dayKey.toUpperCase()}
-                        </div>
-                        <div className={`text-sm font-headline font-bold ${isToday ? 'text-primary' : 'text-on-surface'}`}>
-                          {day?.dateLabel?.split('•')?.[0]?.trim() || ''}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Days Grid Content */}
-                <div className="grid grid-cols-1 sm:grid-cols-7 divide-y sm:divide-y-0 sm:divide-x divide-outline-variant min-h-[560px] p-2 gap-2 bg-surface-container-lowest/60">
-                  {daysKeys.map((dayKey) => {
-                    const day = scheduleData?.days?.[dayKey];
-                    const isToday = day?.isToday;
-                    const blocks = (day?.blocks || []).filter((b: any) => {
-                      if (!showSpaced && b.type === 'spaced') return false;
-                      if (filterSubject !== 'all' && b.subject && !b.subject.toLowerCase().includes(filterSubject.toLowerCase())) {
-                        return false;
-                      }
-                      if (searchQuery.trim()) {
-                        const q = searchQuery.toLowerCase();
-                        const matchTitle = b.title?.toLowerCase().includes(q);
-                        const matchSubj = b.subject?.toLowerCase().includes(q);
-                        return matchTitle || matchSubj;
-                      }
-                      return true;
-                    });
-
-                    return (
-                      <div
-                        key={dayKey}
-                        className={`flex flex-col gap-2 p-1.5 rounded-lg ${
-                          isToday ? 'bg-surface-container/70 border border-primary/40' : ''
+                    {availableSubjects.slice(0, 4).map((subj) => (
+                      <button
+                        key={subj}
+                        onClick={() => setFilterSubject(filterSubject === subj ? 'all' : subj)}
+                        className={`px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-colors cursor-pointer truncate max-w-[140px] ${
+                          filterSubject === subj
+                            ? 'bg-primary text-on-primary font-bold'
+                            : 'bg-primary/10 text-primary border border-primary/30'
                         }`}
                       >
-                        {blocks.map((block: any) => (
-                          <div
-                            key={block.id}
-                            onClick={() => onNavigate('dashboard')}
-                            className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
-                              block.type === 'buffer'
-                                ? 'bg-tertiary-container/20 border-tertiary/30 text-tertiary'
-                                : block.type === 'spaced'
-                                ? 'bg-surface-container/60 border-outline-variant/60 hover:border-outline'
-                                : isToday && block.status === 'in-progress'
-                                ? 'bg-surface-container-highest border-primary shadow-sm glow-primary'
-                                : 'bg-surface-container-high/70 border-outline-variant hover:border-outline'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <span
-                                className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
-                                  block.type === 'buffer'
-                                    ? 'bg-tertiary/20 text-tertiary border-tertiary/40'
-                                    : 'bg-primary/10 text-primary border-primary/30'
-                                }`}
-                              >
-                                {block.subject}
-                              </span>
-                              {block.status === 'completed' ? (
-                                <span className="material-symbols-outlined text-tertiary text-sm">check_circle</span>
-                              ) : isToday ? (
-                                <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-ping"></span>
-                              ) : (
-                                <span className="text-[10px] font-mono text-outline">{block.duration}</span>
-                              )}
-                            </div>
-                            <div className="text-xs text-on-surface font-semibold line-clamp-2">{block.title}</div>
-                            <div className="flex items-center justify-between text-[10px] font-mono text-outline mt-1.5 pt-1 border-t border-outline-variant/40">
-                              <span>{block.badge || block.effort || 'Focus'}</span>
-                              <span className="text-primary font-medium">{block.duration}</span>
-                            </div>
+                        {subj}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Spaced Toggle */}
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={showSpaced}
+                      onChange={(e) => setShowSpaced(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-8 h-4 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-zinc-700 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary relative border border-outline-variant"></div>
+                    <span className="text-xs text-on-surface-variant">Show Spaced Repetition</span>
+                  </label>
+                </div>
+
+                {/* 7-Day Calendar Grid */}
+                <div className="rounded-lg bg-surface-container-low border border-outline-variant overflow-hidden backdrop-blur-md shadow-sm">
+                  <div className="grid grid-cols-7 border-b border-outline-variant bg-surface-container-high/60 text-center divide-x divide-outline-variant">
+                    {daysKeys.map((dayKey) => {
+                      const day = scheduleData?.days?.[dayKey];
+                      const isToday = day?.isToday;
+                      return (
+                        <div
+                          key={dayKey}
+                          className={`py-2.5 px-1 ${isToday ? 'bg-surface-container-highest border-b-2 border-primary' : ''}`}
+                        >
+                          <div className={`text-[11px] font-mono ${isToday ? 'text-primary font-bold' : 'text-outline'}`}>
+                            {day?.dayName || dayKey.toUpperCase()}
                           </div>
-                        ))}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
-
-            {/* 4 Cols: Diagnostic Assistant & Active Modules */}
-            <aside className="xl:col-span-4 flex flex-col gap-4">
-              <div className="rounded-lg bg-surface-container-low border border-outline-variant p-4 space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-outline-variant">
-                  <h3 className="text-xs font-mono font-semibold uppercase text-zinc-300 flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-primary text-base">layers</span>
-                    Active Syllabus Modules
-                  </h3>
-                  <button
-                    onClick={() => onNavigate('dashboard')}
-                    className="text-[11px] font-mono text-primary hover:underline"
-                  >
-                    View All
-                  </button>
-                </div>
-
-                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-                  {modules.slice(0, 6).map((m) => (
-                    <div
-                      key={m.id}
-                      onClick={() => onNavigate('dashboard')}
-                      className="p-2.5 rounded-lg border border-outline-variant bg-surface-container-high/60 hover:border-primary/50 transition-all cursor-pointer flex items-center justify-between gap-2"
-                    >
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold text-on-surface truncate">{m.name}</div>
-                        <div className="text-[11px] font-mono text-on-surface-variant flex items-center gap-2 mt-0.5">
-                          <span>{m.weight}% Exam Weight</span>
-                          <span>•</span>
-                          <span className="text-tertiary">{m.progress}% Done</span>
+                          <div className={`text-sm font-headline font-bold ${isToday ? 'text-primary' : 'text-on-surface'}`}>
+                            {day?.dateLabel?.split('•')?.[0]?.trim() || ''}
+                          </div>
                         </div>
-                      </div>
-                      <span className="material-symbols-outlined text-outline text-sm">arrow_forward</span>
-                    </div>
-                  ))}
-                </div>
+                      );
+                    })}
+                  </div>
 
-                <div className="pt-2 border-t border-outline-variant flex gap-2">
-                  <button
-                    onClick={() => onNavigate('voice-quiz')}
-                    className="flex-1 py-2 px-3 rounded-lg bg-primary-container text-on-primary-container text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-opacity-90 transition-all cursor-pointer active:scale-95"
-                  >
-                    <span className="material-symbols-outlined text-sm">mic</span>
-                    <span>Oral Quiz</span>
-                  </button>
-                  <button
-                    onClick={() => onNavigate('ai-tutor')}
-                    className="flex-1 py-2 px-3 rounded-lg bg-surface-container-high text-on-surface text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-surface-container-highest transition-all cursor-pointer border border-outline-variant active:scale-95"
-                  >
-                    <span className="material-symbols-outlined text-sm">neurology</span>
-                    <span>AI Tutor</span>
-                  </button>
+                  {/* Days Grid Content */}
+                  <div className="grid grid-cols-1 sm:grid-cols-7 divide-y sm:divide-y-0 sm:divide-x divide-outline-variant min-h-[560px] p-2 gap-2 bg-surface-container-lowest/60">
+                    {daysKeys.map((dayKey) => {
+                      const day = scheduleData?.days?.[dayKey];
+                      const isToday = day?.isToday;
+                      const blocks = (day?.blocks || []).filter((b: any) => {
+                        if (!showSpaced && b.type === 'spaced') return false;
+                        if (filterSubject !== 'all' && b.subject && !b.subject.toLowerCase().includes(filterSubject.toLowerCase())) {
+                          return false;
+                        }
+                        if (searchQuery.trim()) {
+                          const q = searchQuery.toLowerCase();
+                          const matchTitle = b.title?.toLowerCase().includes(q);
+                          const matchSubj = b.subject?.toLowerCase().includes(q);
+                          return matchTitle || matchSubj;
+                        }
+                        return true;
+                      });
+
+                      return (
+                        <div
+                          key={dayKey}
+                          className={`flex flex-col gap-2 p-1.5 rounded-lg ${
+                            isToday ? 'bg-surface-container/70 border border-primary/40' : ''
+                          }`}
+                        >
+                          {blocks.map((block: any) => (
+                            <div
+                              key={block.id}
+                              onClick={() => onNavigate('dashboard')}
+                              className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
+                                block.type === 'buffer'
+                                  ? 'bg-tertiary-container/20 border-tertiary/30 text-tertiary'
+                                  : block.type === 'spaced'
+                                  ? 'bg-surface-container/60 border-outline-variant/60 hover:border-outline'
+                                  : isToday && block.status === 'in-progress'
+                                  ? 'bg-surface-container-highest border-primary shadow-sm glow-primary'
+                                  : 'bg-surface-container-high/70 border-outline-variant hover:border-outline'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <span
+                                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
+                                    block.type === 'buffer'
+                                      ? 'bg-tertiary/20 text-tertiary border-tertiary/40'
+                                      : 'bg-primary/10 text-primary border-primary/30'
+                                  }`}
+                                >
+                                  {block.subject}
+                                </span>
+                                {block.status === 'completed' ? (
+                                  <span className="material-symbols-outlined text-tertiary text-sm">check_circle</span>
+                                ) : isToday ? (
+                                  <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-ping"></span>
+                                ) : (
+                                  <span className="text-[10px] font-mono text-outline">{block.duration}</span>
+                                )}
+                              </div>
+                              <div className="text-xs text-on-surface font-semibold line-clamp-2">{block.title}</div>
+                              <div className="flex items-center justify-between text-[10px] font-mono text-outline mt-1.5 pt-1 border-t border-outline-variant/40">
+                                <span>{block.badge || block.effort || 'Focus'}</span>
+                                <span className="text-primary font-medium">{block.duration}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            </aside>
-          </div>
+              </section>
+
+              {/* 4 Cols: Diagnostic Assistant & Active Modules */}
+              <aside className="xl:col-span-4 flex flex-col gap-4">
+                <div className="rounded-lg bg-surface-container-low border border-outline-variant p-4 space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-outline-variant">
+                    <h3 className="text-xs font-mono font-semibold uppercase text-zinc-300 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-primary text-base">layers</span>
+                      Active Syllabus Modules
+                    </h3>
+                    <button
+                      onClick={() => onNavigate('dashboard')}
+                      className="text-[11px] font-mono text-primary hover:underline"
+                    >
+                      View All
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                    {modules.slice(0, 6).map((m) => (
+                      <div
+                        key={m.id}
+                        onClick={() => onNavigate('dashboard')}
+                        className="p-2.5 rounded-lg border border-outline-variant bg-surface-container-high/60 hover:border-primary/50 transition-all cursor-pointer flex items-center justify-between gap-2"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-on-surface truncate">{m.name}</div>
+                          <div className="text-[11px] font-mono text-on-surface-variant flex items-center gap-2 mt-0.5">
+                            <span>{m.weight}% Exam Weight</span>
+                            <span>•</span>
+                            <span className="text-tertiary">{m.progress}% Done</span>
+                          </div>
+                        </div>
+                        <span className="material-symbols-outlined text-outline text-sm">arrow_forward</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-2 border-t border-outline-variant flex gap-2">
+                    <button
+                      onClick={() => onNavigate('voice-quiz')}
+                      className="flex-1 py-2 px-3 rounded-lg bg-primary-container text-on-primary-container text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-opacity-90 transition-all cursor-pointer active:scale-95"
+                    >
+                      <span className="material-symbols-outlined text-sm">mic</span>
+                      <span>Oral Quiz</span>
+                    </button>
+                    <button
+                      onClick={() => onNavigate('ai-tutor')}
+                      className="flex-1 py-2 px-3 rounded-lg bg-surface-container-high text-on-surface text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-surface-container-highest transition-all cursor-pointer border border-outline-variant active:scale-95"
+                    >
+                      <span className="material-symbols-outlined text-sm">neurology</span>
+                      <span>AI Tutor</span>
+                    </button>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          )}
         </main>
       </div>
     </div>

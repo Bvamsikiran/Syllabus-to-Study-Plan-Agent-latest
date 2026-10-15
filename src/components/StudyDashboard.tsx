@@ -4,6 +4,8 @@ import { useGoogleAuth } from '../context/GoogleAuthContext';
 import { HardDrive, Mail, Presentation, FileQuestion, Cloud, CheckCircle, Mic, Sparkles } from 'lucide-react';
 import { saveStudyPlanToFirestore } from '../services/firestoreService';
 
+import { apiKeyService } from '../services/apiKeyService';
+
 interface StudyDashboardProps {
   onNavigate: (screen: ScreenId) => void;
   modules: SyllabusModule[];
@@ -19,11 +21,11 @@ export const StudyDashboard: React.FC<StudyDashboardProps> = ({
   onNavigate,
   modules,
   setModules,
-  courseName = 'Distributed Systems & Engineering',
-  targetDate = '2025-11-28',
-  targetScore = 95,
+  courseName = 'Study Plan',
+  targetDate = '',
+  targetScore = 0,
   slots = {},
-  retentionMode = 'aggressive',
+  retentionMode = 'balanced',
 }) => {
   const { setDriveModalOpen, setSlidesModalOpen, setFormsModalOpen, setGmailModalOpen, user } = useGoogleAuth();
   const [syllabusFilter, setSyllabusFilter] = useState<'all' | 'high-yield' | 'review'>('all');
@@ -35,14 +37,18 @@ export const StudyDashboard: React.FC<StudyDashboardProps> = ({
   const [isSyncingFirebase, setIsSyncingFirebase] = useState(false);
   const [scheduleData, setScheduleData] = useState<any>(null);
 
-  // Fetch dynamic schedule from backend
+  // Fetch dynamic schedule from backend only if modules exist
   useEffect(() => {
     let isMounted = true;
+    if (!modules || modules.length === 0) {
+      setScheduleData(null);
+      return;
+    }
     const fetchDynamicSchedule = async () => {
       try {
         const res = await fetch('/api/generate-schedule', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: apiKeyService.getAiHeaders(),
           body: JSON.stringify({
             units: modules,
             bandwidthSlots: slots,
@@ -97,8 +103,8 @@ export const StudyDashboard: React.FC<StudyDashboardProps> = ({
     }, 3500);
   };
 
-  // Pomodoro countdown timer state
-  const [timerSeconds, setTimerSeconds] = useState(14 * 60 + 22); // 14:22 remaining
+  // Pomodoro countdown timer state — starts cleanly at 25m, not actively running
+  const [timerSeconds, setTimerSeconds] = useState(25 * 60);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
   useEffect(() => {
@@ -159,7 +165,7 @@ export const StudyDashboard: React.FC<StudyDashboardProps> = ({
   };
 
   const completedCount = modules.filter((m) => m.status === 'completed').length;
-  const overallPercentage = Math.round((completedCount / modules.length) * 100) || 64;
+  const overallPercentage = modules.length > 0 ? Math.round((completedCount / modules.length) * 100) : 0;
 
   const filteredModules = modules.filter((m) => {
     if (syllabusFilter === 'high-yield') return m.weight >= 18;
@@ -214,13 +220,15 @@ export const StudyDashboard: React.FC<StudyDashboardProps> = ({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-variant border border-outline-variant text-xs text-on-surface">
             <span className="material-symbols-outlined text-sm text-amber-400">local_fire_department</span>
-            <span className="font-medium">Streak: 18 Days</span>
+            <span className="font-medium">Streak: {user ? '0 Days' : '—'}</span>
           </div>
 
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-variant border border-outline-variant text-xs text-on-surface">
             <span className="material-symbols-outlined text-sm text-primary">schedule</span>
-            <span className="text-on-surface-variant">Today's Goal:</span>
-            <span className="text-primary font-mono font-medium">3.5h / 4.0h</span>
+            <span className="text-on-surface-variant">Daily Goal:</span>
+            <span className="text-primary font-mono font-medium">
+              {modules.length > 0 ? 'In Progress' : '—'}
+            </span>
           </div>
 
           <button
