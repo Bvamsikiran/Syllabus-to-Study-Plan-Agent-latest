@@ -1,171 +1,277 @@
-# Syllabus-to-Study-Plan Agent
+<div align="center">
 
-[![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-8.x-646CFF.svg)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC.svg)](https://tailwindcss.com/)
-[![Google Gemini API](https://img.shields.io/badge/Google%20Gemini-Multimodal%20%26%20Live-FF8800.svg)](https://ai.google.dev/)
-[![Firebase](https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28.svg)](https://firebase.google.com/)
+# ? Synapse AI ? Syllabus to Study Plan Agent
 
-An intelligent, agentic full-stack web application that transforms raw course syllabi into dynamic, adaptive, and personalized study schedules. Powered by **Google Gemini Multimodal API**, **Real-Time Voice AI Coaching**, **RAG (Retrieval-Augmented Generation)**, and deep integration with the **Google Workspace Ecosystem** (Drive, Gmail, Slides, Forms).
+### *Transform Course Syllabi into Intelligent, Adaptive Study Plans with Real-Time Voice Coaching*
 
----
+[![React 19](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Google Gemini API](https://img.shields.io/badge/Google_Gemini-Multimodal_%26_Live-FF8800?style=for-the-badge&logo=google-gemini&logoColor=white)](https://ai.google.dev/)
+[![Firebase](https://img.shields.io/badge/Firebase-Auth_%26_Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-## Key Highlights & Features
+<br/>
 
-### 1. Agentic Syllabus Processing & RAG Engine
-- **Multimodal Document Ingestion**: Upload course syllabi in PDF or plain text. The agent extracts course milestones, grading rubrics, exam dates, and chapter dependencies.
-- **RAG-Powered Knowledge Retrieval**: Course content is chunked, indexed, and retrieved contextually during study planning and tutoring sessions.
-- **Adaptive Scheduling Algorithm**: Dynamically balances exam timelines, weekly student bandwidth, difficult subject weighting, and revision intervals.
+[?? Quick Start](#-quick-start) ? [? Key Features](#-key-features) ? [?? System Architecture](#-system-architecture) ? [?? Workflow](#-user-workflow) ? [??? Integrations](#%EF%B8%8F-google-workspace-integrations) ? [?? Project Structure](#-project-structure)
 
-### 2. Real-Time Voice Study Coach & AI Tutor
-- **Gemini Live Audio Interaction**: Low-latency, bidirectional audio coach that conducts interactive study check-ins and explains complex concepts.
-- **Voice Recall Quizzes**: Oral flashcard and active recall drills with automated speech evaluation.
-- **Generative AI Chatbot**: Built-in interactive assistant with support for Google Gemini models and customizable local/on-device options (Gemma 4 12B to 31B architecture support).
+<br/>
 
-### 3. Seamless Google Workspace Integrations
-- **Google Sign-In**: Unified, secure authentication with custom cyberpunk-academic styling.
-- **Google Drive**: Export and sync study plans, curated reading lists, and revision notes directly to Google Drive folders.
-- **Gmail Automation**: Scheduled email reminders, exam countdown digests, and calendar notifications.
-- **Google Slides Generator**: Turn complex syllabus modules and weekly outlines into lecture slide decks automatically.
-- **Google Forms Exporter**: Automatically generate self-assessment quizzes and practice exams from syllabus objectives.
+<kbd><img src="docs/assets/dashboard-preview.png" alt="Synapse AI Study Dashboard Preview" width="100%" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" /></kbd>
 
-### 4. Modern Cyber-Academic UI / UX
-- **Dynamic Glassmorphism**: Tailored cyber-academic color palette with deep obsidian, neon cyan accents, and glowing card borders.
-- **Micro-Animations**: Fluid transitions powered by motion (Framer Motion).
-- **Responsive Master Dashboard**: Interactive timeline, weekly task breakdowns, progress rings, and milestone checklists.
+<p align="center"><i>The Synapse AI Master Dashboard featuring cyber-academic visuals, active recall coach, study telemetry, and Google Workspace integrations.</i></p>
+
+</div>
 
 ---
 
-## Tech Stack
+## ?? Overview
 
-- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, Lucide Icons, Framer Motion (motion)
-- **Backend / Server**: Node.js, Express, 	sx
-- **AI & Multimodal**: @google/genai (Gemini 2.0 Flash / Live API), Local Gemma 4 Engine interface
-- **Cloud & Auth**: Firebase Auth, Firebase Admin SDK, Cloud Firestore
-- **Audio Processing**: Web Audio API (PCM 16kHz / 24kHz recorder and player)
+**Synapse AI** is an agentic, multimodal study companion engineered for ambitious students and self-learners. Rather than producing static to-do lists, Synapse AI deconstructs dense academic syllabi (PDFs or markdown) using **multimodal Gemini models**, builds an indexable **RAG knowledge graph**, and generates an adaptive, milestone-driven study curriculum tailored to the student's exam timeline, difficulty weighting, and weekly bandwidth.
+
+It features a **low-latency Gemini Live Voice Coach** for oral flashcard interrogation and interactive concept drills, along with automated export pipelines into **Google Drive**, **Google Slides**, **Google Forms**, and **Gmail**.
 
 ---
 
-## Getting Started
+## ? Key Features
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>?? Autonomous Syllabus Decomposition</h3>
+      <ul>
+        <li><b>Multimodal PDF/Text Ingestion</b>: Extracts course milestones, grading rubrics, exam schedules, textbook chapters, and topic prerequisites.</li>
+        <li><b>RAG-Augmented Knowledge Engine</b>: Chunks and vectors syllabus topics for grounded, hallucination-free study recommendations.</li>
+        <li><b>Adaptive Time Allocator</b>: Weights difficult modules and automatically schedules spaced repetition intervals.</li>
+      </ul>
+    </td>
+    <td width="50%" valign="top">
+      <h3>??? Real-Time Voice Study Coach</h3>
+      <ul>
+        <li><b>Gemini Live Audio Integration</b>: Full-duplex conversational voice checks using bidirectional Web Audio PCM streams.</li>
+        <li><b>Voice Recall Quizzes</b>: Spoken active recall sessions with automated speech recognition and instant answer critiques.</li>
+        <li><b>Generative AI Tutor</b>: Context-aware chat with support for Google Gemini models and Gemma 4 (12B?31B) parameter local profiles.</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>?? Google Workspace Automation</h3>
+      <ul>
+        <li><b>Google Drive</b>: Sync curated reading lists, study notes, and revision checklists directly to Google Drive folders.</li>
+        <li><b>Google Slides Generator</b>: Compiles weekly module summaries into beautifully structured presentation decks.</li>
+        <li><b>Google Forms Exporter</b>: Transforms study objectives into self-grading diagnostic quizzes.</li>
+        <li><b>Gmail Alerts</b>: Scheduled study digests and upcoming exam countdowns delivered to your inbox.</li>
+      </ul>
+    </td>
+    <td width="50%" valign="top">
+      <h3>?? Modern Cyber-Academic UX</h3>
+      <ul>
+        <li><b>Glassmorphic Aesthetics</b>: Tailored obsidian dark mode accented by neon cyan highlights and glowing telemetry cards.</li>
+        <li><b>Micro-Animations</b>: Physics-based interactive motion powered by Framer Motion (<code>motion</code>).</li>
+        <li><b>Unified Master Schedule</b>: Interactive progress rings, completion tracking, task filtering, and streak telemetry.</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+---
+
+## ?? System Architecture
+
+```mermaid
+flowchart TD
+    subgraph Client ["??? Client (React 19 + TypeScript)"]
+        UI["Modern Cyber-Academic Dashboard"]
+        AudioIn["PCM Audio Worklet (16kHz Capture)"]
+        AudioOut["PCM Audio Player (24kHz Playback)"]
+        Auth["Google Auth Context"]
+    end
+
+    subgraph Server ["?? Full-Stack Backend (Node.js + Express)"]
+        API["Express Proxy and Middleware"]
+        RAG["RAG Knowledge Engine and Vector Store"]
+        LiveClient["Gemini Live WebSocket Client"]
+    end
+
+    subgraph AI ["?? Google AI Ecosystem"]
+        GeminiFlash["Gemini 2.0 Flash (Multimodal Decomposition)"]
+        GeminiLive["Gemini Live API (Bidirectional Audio Coach)"]
+        GemmaEngine["Local / Gemma 4 Engine (12B-31B Profile)"]
+    end
+
+    subgraph Workspace ["?? Google Workspace and Cloud"]
+        GDrive["Google Drive API"]
+        GSlides["Google Slides API"]
+        GForms["Google Forms API"]
+        GGmail["Gmail API"]
+        Firebase["Firebase Auth and Cloud Firestore"]
+    end
+
+    UI --> Auth --> Firebase
+    UI --> API
+    AudioIn --> LiveClient --> GeminiLive --> AudioOut
+    API --> RAG --> GeminiFlash
+    API --> GDrive
+    API --> GSlides
+    API --> GForms
+    API --> GGmail
+    API --> GemmaEngine
+```
+
+---
+
+## ?? User Workflow
+
+```text
+  [ ?? 1. Upload Syllabus ]
+           ?
+           ?
+  [ ?? 2. Exam Milestones ] ??? Set final exam dates, midterms, and quiz checkpoints
+           ?
+           ?
+  [ ?? 3. Weekly Bandwidth ] ??? Define daily study hours, rest days, and crunch periods
+           ?
+           ?
+  [ ?? 4. Resource Profile ] ??? Prioritize textbooks, videos, practice problems, or flashcards
+           ?
+           ?
+  [ ?? 5. Master Schedule  ] ??? Dynamic calendar, daily micro-tasks, and streak monitoring
+           ??? ??? Voice Coach    ??? Real-time conversational concept drills and active recall
+           ??? ?? Workspace Sync ??? Export to Google Drive, Slides, Forms, and Gmail
+```
+
+---
+
+## ??? Google Workspace Integrations
+
+| Service | Feature | Output Artifact |
+| :--- | :--- | :--- |
+| **Google Sign-In** | Custom cyber-academic auth button | Secure OAuth session with Google API scopes |
+| **Google Drive** | One-click study repository export | Structured Google Drive study folder with notes and checklists |
+| **Google Slides** | Automated lecture slide generation | Multi-slide presentation deck covering syllabus modules |
+| **Google Forms** | Active recall test generator | Form quiz complete with multiple-choice questions and answer keys |
+| **Gmail** | Automated email digests | Weekly revision agendas and urgent exam countdown alerts |
+
+---
+
+## ?? Quick Start
 
 ### Prerequisites
 - **Node.js**: v18.0.0 or higher
-- **npm** or **yarn** / **pnpm**
-- **Google Gemini API Key**: Get one at [Google AI Studio](https://aistudio.google.com/)
-- *(Optional)* **Firebase Project**: For Firebase Authentication and Cloud Firestore storage
+- **npm** (v9+) or **yarn** / **pnpm**
+- **Google Gemini API Key**: [Get a key from Google AI Studio](https://aistudio.google.com/)
+- *(Optional)* **Firebase Project**: For persistent cloud storage and Firebase Authentication
 
-### Installation
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Bvamsikiran/Syllabus-to-Study-Plan-Agent-latest.git
+cd Syllabus-to-Study-Plan-Agent-latest
+```
 
-1. **Clone the repository:**
-   `ash
-   git clone https://github.com/Bvamsikiran/Syllabus-to-Study-Plan-Agent.git
-   cd Syllabus-to-Study-Plan-Agent
-   `
+### 2. Install Dependencies
+```bash
+npm install
+```
 
-2. **Install dependencies:**
-   `ash
-   npm install
-   `
+### 3. Configure Environment Variables
+Create a local `.env` configuration file:
+```bash
+cp .env.example .env
+```
 
-3. **Configure Environment Variables:**
-   Copy the example .env file:
-   `ash
-   cp .env.example .env
-   `
-   Fill in your configuration:
-   `env
-   # Google Gemini API
-   GEMINI_API_KEY=your_gemini_api_key_here
-   GEMINI_LIVE_MODEL=gemini-2.0-flash-exp
+Edit `.env` with your API credentials:
+```env
+# Google Gemini API
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_LIVE_MODEL=gemini-2.0-flash-exp
 
-   # Firebase Configuration (Optional for cloud sync)
-   FIREBASE_API_KEY=your_firebase_api_key
-   FIREBASE_SERVICE_ACCOUNT_JSON=
+# Firebase Configuration (Optional for cloud sync)
+FIREBASE_API_KEY=your_firebase_api_key
+FIREBASE_SERVICE_ACCOUNT_JSON=
 
-   # Server Port
-   PORT=3000
-   `
+# Server Port
+PORT=3000
+```
 
-4. **Start the Development Server:**
-   `ash
-   npm run dev
-   `
-   The application will start at http://localhost:3000.
+### 4. Run the Application
+```bash
+npm run dev
+```
 
----
-
-## Application Workflow
-
-1. **Step 1 - Upload Syllabus**: Drag-and-drop your course syllabus (PDF or text).
-2. **Step 2 - Exam & Milestones**: Enter upcoming exam dates, quiz schedules, and assignment deadlines.
-3. **Step 3 - Bandwidth Allocation**: Set your daily/weekly study hours, preferred rest days, and study duration.
-4. **Step 4 - Learning Preferences**: Select preferred resources (video lectures, textbooks, practice problems, flashcards).
-5. **Interactive Dashboard**:
-   - Track daily study tasks.
-   - Practice with the Voice Recall Coach.
-   - Ask the AI Tutor questions with citation-backed syllabus references.
-   - Export your calendar to Google Drive, Slides, or Forms.
+Visit [`http://localhost:3000`](http://localhost:3000) in your browser.
 
 ---
 
-## Available Scripts
+## ?? Available Scripts
 
 | Command | Description |
 | :--- | :--- |
-| 
-pm run dev | Starts the Express server and Vite development bundler with hot reload |
-| 
-pm run build | Builds the optimized production assets in /dist |
-| 
-pm run start | Runs the production server via 	sx server.ts |
-| 
-pm run lint | Type-checks the codebase using TypeScript (	sc --noEmit) |
-| 
-pm run preview | Locally previews the production build |
+| `npm run dev` | Launches the Express server and Vite development bundler with HMR |
+| `npm run build` | Compiles optimized production bundle in `/dist` |
+| `npm run start` | Executes the production build with `tsx server.ts` |
+| `npm run lint` | Performs strict TypeScript type checks (`tsc --noEmit`) |
+| `npm run preview` | Previews the production build locally |
 
 ---
 
-## Project Structure
+## ?? Project Structure
 
-`	ext
-├── public/                 # Static assets and icons
-├── src/
-│   ├── components/         # UI components
-│   │   ├── GoogleAuthButton.tsx    # Styled Google Authentication component
-│   │   ├── ModernStudyDashboard.tsx # Main cyber-academic dashboard
-│   │   ├── VoiceStudyCoach.tsx      # Real-time Gemini Live voice interaction
-│   │   ├── GenerativeAITutor.tsx    # Context-aware AI chat tutor
-│   │   ├── Step1Upload.tsx          # Syllabus upload wizard
-│   │   ├── Step2Exam.tsx            # Exam schedule configuration
-│   │   ├── Step3Bandwidth.tsx       # Hours & bandwidth allocator
-│   │   ├── Step4Resources.tsx       # Resource & style selector
-│   │   ├── GoogleDriveModal.tsx     # Google Drive export modal
-│   │   ├── GoogleSlidesModal.tsx    # Google Slides deck generator
-│   │   ├── GoogleFormsModal.tsx     # Google Forms quiz creator
-│   │   └── GmailSyncModal.tsx       # Gmail reminder synchronizer
-│   ├── context/            # Global React context (Auth & state)
-│   ├── lib/                # Audio utilities, Live API client, Knowledge base
-│   ├── services/           # Firebase, Gemini API, RAG, and Google Workspace services
-│   ├── types/              # TypeScript interfaces and schema types
-│   ├── App.tsx             # Root application orchestrator
-│   └── main.tsx            # React DOM mounting
-├── server.ts               # Express server with Vite middleware & Gemini proxy
-└── package.json            # Project dependencies and run scripts
-`
-
----
-
-## Contributing
-
-1. Fork the repository.
-2. Create a feature branch: git checkout -b feature/amazing-feature.
-3. Commit your changes: git commit -m 'Add amazing feature'.
-4. Push to the branch: git push origin feature/amazing-feature.
-5. Open a Pull Request.
+```text
+Syllabus-to-Study-Plan-Agent/
+??? public/                       # Static assets & audio capture worklets
+?   ??? pcm-capture-worklet.js   # 16kHz Web Audio capture processor
+??? docs/                         # Documentation & media assets
+?   ??? assets/
+?       ??? dashboard-preview.png # High-res dashboard screenshot
+??? src/
+?   ??? components/               # Cyber-academic UI components
+?   ?   ??? GoogleAuthButton.tsx     # Custom styled Google OAuth component
+?   ?   ??? ModernStudyDashboard.tsx # Core master dashboard & study telemetry
+?   ?   ??? VoiceStudyCoach.tsx       # Bidirectional Gemini Live voice coach
+?   ?   ??? VoiceRecallQuiz.tsx       # Spoken flashcard interrogation engine
+?   ?   ??? GenerativeAITutor.tsx     # Multimodal AI chat companion
+?   ?   ??? Step1Upload.tsx           # Syllabus document ingestion wizard
+?   ?   ??? Step2Exam.tsx             # Exam timeline configuration
+?   ?   ??? Step3Bandwidth.tsx        # Weekly study bandwidth allocator
+?   ?   ??? Step4Resources.tsx        # Learning style & resource selection
+?   ?   ??? GoogleDriveModal.tsx      # Google Drive export integration
+?   ?   ??? GoogleSlidesModal.tsx     # Google Slides deck builder
+?   ?   ??? GoogleFormsModal.tsx      # Google Forms quiz creator
+?   ?   ??? GmailSyncModal.tsx        # Gmail study reminder automation
+?   ??? context/                  # React global contexts (GoogleAuthContext)
+?   ??? lib/                      # Audio worklets, Live API client & Knowledge base
+?   ??? services/                 # Gemini API, RAG, Firebase & Google Workspace APIs
+?   ??? types/                    # TypeScript interfaces & domain models
+?   ??? App.tsx                   # Main application flow orchestrator
+?   ??? index.css                 # Cyber-academic design system tokens & styles
+?   ??? main.tsx                  # React 19 root mounting
+??? server.ts                     # Express full-stack proxy & Gemini Live bridge
+??? package.json                  # Dependencies & scripts
+??? tsconfig.json                 # TypeScript compiler configuration
+```
 
 ---
 
-## License
+## ?? Contributing
 
-This project is licensed under the MIT License.
+Contributions are welcomed! Follow these steps to contribute:
+
+1. **Fork** the repository
+2. **Create a branch**: `git checkout -b feature/amazing-feature`
+3. **Commit your changes**: `git commit -m 'feat: add amazing feature'`
+4. **Push to branch**: `git push origin feature/amazing-feature`
+5. **Open a Pull Request**
+
+---
+
+## ?? License
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
+
+<div align="center">
+
+**Crafted with ? by the Synapse AI Team for the Google Agentic AI Hackathon**
+
+</div>
