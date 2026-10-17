@@ -36,6 +36,7 @@ import { VoiceCoachPanel } from './VoiceCoachPanel';
 import { GenerativeAITutor } from './GenerativeAITutor';
 import { ragService } from '../services/ragService';
 import { useGoogleAuth } from '../context/GoogleAuthContext';
+import { GoogleAuthButton } from './GoogleAuthButton';
 import { getAITutorConversationsFromFirestore } from '../services/firestoreService';
 import { apiKeyService } from '../services/apiKeyService';
 
@@ -304,35 +305,8 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
               <span>{hasApiKey ? 'Gemini Active' : 'Set API Key'}</span>
             </button>
 
-            {/* User Profile Pill */}
-            {user ? (
-              <div
-                onClick={signOut}
-                className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-[#0b132b] border border-sky-500/25 hover:border-cyan-400/50 text-xs text-white cursor-pointer transition-all"
-                title="Click to sign out"
-              >
-                {user.photoURL ? (
-                  <img
-                    src={user.photoURL}
-                    alt="Avatar"
-                    className="w-6 h-6 rounded-full object-cover border border-cyan-400/40"
-                  />
-                ) : (
-                  <div className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-bold text-[10px]">
-                    {user.displayName?.charAt(0) || 'U'}
-                  </div>
-                )}
-                <span className="font-medium text-slate-200">{user.displayName || 'Scholar'}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-              </div>
-            ) : (
-              <button
-                onClick={signIn}
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-400/40 hover:bg-cyan-500/25 text-cyan-300 text-xs font-semibold transition-all cursor-pointer"
-              >
-                Sign In with Google
-              </button>
-            )}
+            {/* Google Authentication & Workspace Menu */}
+            <GoogleAuthButton />
           </div>
         </header>
 

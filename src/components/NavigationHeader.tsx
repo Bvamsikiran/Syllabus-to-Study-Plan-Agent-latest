@@ -53,7 +53,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
           <Key className="w-3.5 h-3.5" />
           <span>{hasKey ? 'Key ✓' : 'Set Key'}</span>
         </button>
-        <GoogleAuthButton />
+        <GoogleAuthButton compact={true} />
         <button
           onClick={() => setCollapsed(false)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0b132b]/95 border border-cyan-400/40 text-cyan-300 text-xs font-mono shadow-2xl backdrop-blur-md hover:bg-[#131f42] transition-all cursor-pointer"
