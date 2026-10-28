@@ -76,3 +76,4 @@ export const SetupBanner: React.FC<SetupBannerProps> = ({ onOpenApiKeyModal }) =
     </div>
   );
 };
+
