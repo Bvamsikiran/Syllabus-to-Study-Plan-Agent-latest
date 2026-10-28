@@ -175,23 +175,17 @@ cd Syllabus-to-Study-Plan-Agent-latest
 npm install
 ```
 
-### 3. Configure Environment Variables
-Create a local `.env` configuration file:
-```bash
-cp .env.example .env
-```
+### 3. Configure Environment Variables *(Optional)*
+The server will automatically generate a local `.env` from `.env.example` on your first launch.
 
-Edit `.env` with your API credentials:
+You can set your Gemini API key in `.env` or input it directly in the web UI header:
 ```env
-# Google Gemini API
+# Google Gemini API (Get free key at https://aistudio.google.com/app/apikey)
 GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_LIVE_MODEL=gemini-2.0-flash-exp
+GEMINI_TEXT_MODEL=gemini-3.5-flash
+GEMINI_LIVE_MODEL=gemini-3.8-live
 
-# Firebase Configuration (Optional for cloud sync)
-FIREBASE_API_KEY=your_firebase_api_key
-FIREBASE_SERVICE_ACCOUNT_JSON=
-
-# Server Port
+# Server Port (auto-increments if port is busy)
 PORT=3000
 ```
 
@@ -201,6 +195,11 @@ npm run dev
 ```
 
 Visit [`http://localhost:3000`](http://localhost:3000) in your browser.
+
+> **💡 Zero Friction First Run:**
+> - Click **"Try Sample Syllabus"** on the upload screen to test instantly with a 4-unit Distributed Systems syllabus.
+> - Click the **Key icon** in the top header to enter or test your Gemini API key on the fly.
+> - Click **"PDF / Print"** on any generated study plan for instant, offline export (no Google login required).
 
 ---
 

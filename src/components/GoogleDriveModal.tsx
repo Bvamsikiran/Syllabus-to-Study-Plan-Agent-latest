@@ -179,7 +179,21 @@ ${currentModules
                 </p>
               </div>
               <button
-                onClick={() => requestScope(DRIVE_SCOPES)}
+                onClick={async () => {
+                  try {
+                    setError(null);
+                    await requestScope(DRIVE_SCOPES);
+                  } catch (err: any) {
+                    const code = err?.code || '';
+                    if (code === 'auth/operation-not-allowed') {
+                      setError('Google sign-in is disabled in your Firebase Console. Please enable "Google" under Authentication → Sign-in method.');
+                    } else if (code === 'auth/popup-closed-by-user') {
+                      setError('Sign-in cancelled. Popup was closed before authorization.');
+                    } else {
+                      setError(err.message || 'Failed to authenticate Google Drive.');
+                    }
+                  }
+                }}
                 disabled={isSigningIn}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs shadow-lg shadow-emerald-900/30 transition-all active:scale-95"
               >

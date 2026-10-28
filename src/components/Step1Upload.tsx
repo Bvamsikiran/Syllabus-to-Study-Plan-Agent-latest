@@ -107,8 +107,20 @@ export const Step1Upload: React.FC<Step1UploadProps> = ({
       return;
     }
 
+    // Check if API key is present before making request
+    if (!apiKeyService.hasKey()) {
+      setErrorMessage(
+        'No Gemini API key configured. Click the "🔑 Gemini Key" button in the top navigation bar to add your API key from https://aistudio.google.com/app/apikey — it\'s free.'
+      );
+      return;
+    }
+
     setIsParsing(true);
     setErrorMessage(null);
+
+    // 60-second timeout to prevent indefinite spinner
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
 
     try {
       const response = await fetch('/api/analyze-syllabus', {
@@ -118,7 +130,9 @@ export const Step1Upload: React.FC<Step1UploadProps> = ({
           text: syllabusText.trim(),
           filename: selectedFile,
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       const res = await response.json();
 
@@ -126,18 +140,56 @@ export const Step1Upload: React.FC<Step1UploadProps> = ({
         onSyllabusParsed(res.data);
         onNavigate('step2-exam');
       } else {
-        setErrorMessage(
-          res.message || res.error || 'Failed to analyze syllabus. Please check your Gemini API key and retry.'
-        );
+        const errCode = res.error || '';
+        if (errCode === 'API_KEY_REQUIRED') {
+          setErrorMessage('No Gemini API key set on the server. Click "🔑 Gemini Key" in the top navigation to add your key.');
+        } else if (errCode === 'ANALYSIS_FAILED' && res.message?.includes('quota')) {
+          setErrorMessage('Gemini API quota exceeded. Please check your quota at https://aistudio.google.com or try a different API key.');
+        } else {
+          setErrorMessage(res.message || res.error || 'Failed to analyze syllabus. Check your Gemini API key and try again.');
+        }
       }
     } catch (err: any) {
-      console.error('Syllabus analysis error:', err);
-      setErrorMessage(
-        err.message || 'Unable to connect to analysis service. Please check your connection and retry.'
-      );
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        setErrorMessage('Analysis timed out after 60 seconds. Your API key may be invalid, or the Gemini service may be slow. Please verify your key and retry.');
+      } else {
+        console.error('Syllabus analysis error:', err);
+        setErrorMessage(err.message || 'Unable to connect to analysis service. Check your internet connection and retry.');
+      }
     } finally {
       setIsParsing(false);
     }
+  };
+
+  const loadSampleSyllabus = () => {
+    setSelectedFile('Distributed-Systems-CS401.md');
+    setSyllabusText(
+`Course: CS401 Distributed Systems & Cloud Infrastructure
+Target Final Exam Date: 2026-12-15 (Target Score: 85%)
+Midterm Exam Date: 2026-10-30
+
+Unit 1: Distributed Foundations & Physical/Logical Clocks
+- Lamport Timestamps & Vector Clocks
+- Consistent Cut & Chandy-Lamport Snapshot Algorithm
+- CAP Theorem & PACELC Trade-offs
+
+Unit 2: Consensus Protocols & Fault Tolerance
+- Paxos Consensus Protocol & Multi-Paxos
+- Raft Consensus Algorithm: Leader Election, Log Replication, Safety Invariants
+- Byzantine Fault Tolerance (PBFT) & Quorum Systems
+
+Unit 3: Distributed Storage & Transactions
+- Two-Phase Commit (2PC) & Three-Phase Commit (3PC)
+- ACID vs BASE, Distributed Spanner TrueTime API
+- Dynamo-style Distributed Hash Tables (Consistent Hashing, Read Repair)
+
+Unit 4: Microservices & Event Streaming
+- Event-Driven Architecture with Apache Kafka
+- RPC Semantics (gRPC, Protocol Buffers, Idempotency)
+- Distributed Tracing (OpenTelemetry) & Circuit Breaker Patterns`
+    );
+    setErrorMessage(null);
   };
 
   const canContinue = syllabusText && syllabusText.trim().length >= 10;
@@ -284,6 +336,15 @@ export const Step1Upload: React.FC<Step1UploadProps> = ({
               >
                 <span className="material-symbols-outlined text-xs">content_paste</span>
                 <span>Paste from Clipboard</span>
+              </button>
+              <button
+                type="button"
+                onClick={loadSampleSyllabus}
+                className="inline-flex items-center gap-1 text-[11px] font-mono text-cyan-400 hover:text-cyan-300 font-semibold hover:underline cursor-pointer ml-3"
+                title="Load a full sample CS syllabus for instant testing"
+              >
+                <span className="material-symbols-outlined text-xs">auto_awesome</span>
+                <span>Try Sample Syllabus</span>
               </button>
             </div>
 

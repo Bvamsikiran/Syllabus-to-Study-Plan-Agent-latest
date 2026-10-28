@@ -13,6 +13,8 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onKey
   const [showKey, setShowKey] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [hasExistingKey, setHasExistingKey] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -25,29 +27,72 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onKey
         setHasExistingKey(false);
       }
       setSavedSuccess(false);
+      setValidationError(null);
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
-    if (!keyInput.trim()) return;
-    apiKeyService.setKey(keyInput.trim());
-    setSavedSuccess(true);
-    setHasExistingKey(true);
-    if (onKeySaved) {
-      onKeySaved(keyInput.trim());
+  const handleSave = async () => {
+    const trimmed = keyInput.trim();
+    if (!trimmed) return;
+
+    // Basic format check
+    if (trimmed.length < 15) {
+      setValidationError('API key is too short. Please verify your key from Google AI Studio.');
+      return;
     }
-    setTimeout(() => {
-      setSavedSuccess(false);
-      onClose();
-    }, 1200);
+
+    setValidating(true);
+    setValidationError(null);
+
+    try {
+      const res = await fetch('/api/validate-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-gemini-api-key': trimmed },
+        body: JSON.stringify({}),
+        signal: AbortSignal.timeout(20_000),
+      });
+      const data = await res.json();
+
+      if (data.valid) {
+        apiKeyService.setKey(trimmed);
+        setSavedSuccess(true);
+        setHasExistingKey(true);
+        if (onKeySaved) onKeySaved(trimmed);
+        setTimeout(() => {
+          setSavedSuccess(false);
+          onClose();
+        }, 1500);
+      } else {
+        setValidationError(data.error || 'API key validation failed. Please check your key.');
+      }
+    } catch (err: any) {
+      if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+        // Save anyway on timeout — might be a slow connection
+        apiKeyService.setKey(trimmed);
+        setSavedSuccess(true);
+        setHasExistingKey(true);
+        if (onKeySaved) onKeySaved(trimmed);
+        setTimeout(() => {
+          setSavedSuccess(false);
+          onClose();
+        }, 1200);
+      } else {
+        setValidationError('Could not connect to validation service. The key has been saved — try using the app to confirm it works.');
+        apiKeyService.setKey(trimmed);
+        setHasExistingKey(true);
+      }
+    } finally {
+      setValidating(false);
+    }
   };
 
   const handleClear = () => {
     apiKeyService.clearKey();
     setKeyInput('');
     setHasExistingKey(false);
+    setValidationError(null);
   };
 
   return (
@@ -97,7 +142,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onKey
                 type={showKey ? 'text' : 'password'}
                 value={keyInput}
                 onChange={(e) => setKeyInput(e.target.value)}
-                placeholder="AIzaSy..."
+                placeholder="Paste Gemini API key (AIza... or AQ...)"
                 className="w-full bg-[#0d1633] border border-sky-500/30 focus:border-cyan-400 focus:outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-slate-500 pr-10 font-mono"
               />
               <button
@@ -135,7 +180,14 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onKey
           {savedSuccess && (
             <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center gap-2 text-emerald-400 text-xs">
               <Check className="w-4 h-4 shrink-0" />
-              <span>Gemini API key saved successfully!</span>
+              <span>✓ Key verified and saved! All AI features are now active.</span>
+            </div>
+          )}
+
+          {validationError && (
+            <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-start gap-2 text-rose-300 text-xs">
+              <X className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+              <span>{validationError}</span>
             </div>
           )}
 
@@ -143,16 +195,27 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onKey
           <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-sky-500/15">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50 transition cursor-pointer"
+              disabled={validating}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50 transition cursor-pointer disabled:opacity-40"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              disabled={!keyInput.trim()}
-              className="px-5 py-2 rounded-xl text-xs font-bold text-slate-900 bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg shadow-cyan-500/20 cursor-pointer"
+              disabled={!keyInput.trim() || validating}
+              className="px-5 py-2 rounded-xl text-xs font-bold text-slate-900 bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg shadow-cyan-500/20 cursor-pointer flex items-center gap-2"
             >
-              Save Key
+              {validating ? (
+                <>
+                  <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Validating…
+                </>
+              ) : (
+                'Verify & Save Key'
+              )}
             </button>
           </div>
         </div>

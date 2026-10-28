@@ -34,15 +34,26 @@ export const GoogleAuthButton: React.FC<{ compact?: boolean }> = ({ compact = fa
     } catch (err: any) {
       const code = err?.code || '';
       if (code === 'auth/popup-closed-by-user') {
-        setAuthError('Sign-in cancelled. Popup was closed.');
+        setAuthError('Sign-in cancelled. You closed the popup — click again to retry.');
       } else if (code === 'auth/popup-blocked') {
-        setAuthError('Popup blocked by browser. Please allow popups for this site.');
+        setAuthError('Popup blocked! Allow popups for localhost in your browser settings, then retry.');
       } else if (code === 'auth/unauthorized-domain') {
-        setAuthError('Domain not authorized in Firebase Console.');
+        setAuthError(
+          'UNAUTHORIZED_DOMAIN: localhost is not authorized in Firebase.\n' +
+          'FIX: Go to Firebase Console → Authentication → Settings → Authorized domains → Add "localhost".\n' +
+          'Project: syllabus-to-study-plan-agent'
+        );
+      } else if (code === 'auth/operation-not-allowed') {
+        setAuthError('Google sign-in is not enabled in Firebase Console. Enable the Google provider under Authentication → Sign-in method.');
+      } else if (code === 'auth/network-request-failed') {
+        setAuthError('Network error — check your internet connection and retry.');
       } else {
-        setAuthError(err?.message || 'Google authentication failed.');
+        setAuthError(`Auth error (${code || 'unknown'}): ${err?.message || 'Google authentication failed.'}`);
       }
-      setTimeout(() => setAuthError(null), 6000);
+      // Don't auto-dismiss for unauthorized-domain since it needs user action
+      if (code !== 'auth/unauthorized-domain') {
+        setTimeout(() => setAuthError(null), 8000);
+      }
     }
   };
 
@@ -95,18 +106,46 @@ export const GoogleAuthButton: React.FC<{ compact?: boolean }> = ({ compact = fa
         </button>
 
         {authError && (
-          <div className="absolute right-0 top-full mt-2 w-72 p-2.5 rounded-xl bg-[#0f172a] border border-amber-500/50 shadow-2xl text-[11px] text-amber-200 z-[9999] flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
-            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <span className="font-semibold block text-amber-300">Sign-In Note</span>
-              <span>{authError}</span>
+          <div className="absolute right-0 top-full mt-2 w-80 p-3 rounded-xl bg-[#0f172a] border border-amber-500/50 shadow-2xl text-[11px] text-amber-200 z-[9999] flex flex-col gap-2">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <span className="font-bold block text-amber-300 mb-1">
+                  {authError.includes('UNAUTHORIZED_DOMAIN') ? '⚠ Domain Not Authorized' : 'Sign-In Note'}
+                </span>
+                {authError.split('\n').map((line, i) => (
+                  <p key={i} className="leading-relaxed text-amber-200/90 mb-0.5">{line}</p>
+                ))}
+              </div>
+              <button
+                onClick={() => setAuthError(null)}
+                className="text-slate-400 hover:text-white p-0.5 cursor-pointer shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <button
-              onClick={() => setAuthError(null)}
-              className="text-slate-400 hover:text-white p-0.5"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+            {authError.includes('Sign-in method') && (
+              <a
+                href="https://console.firebase.google.com/u/1/project/syllabus-to-study-plan-agent/authentication/providers"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-semibold transition text-[11px]"
+              >
+                <span>Enable Google Sign-in in Firebase</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+            )}
+            {authError.includes('UNAUTHORIZED_DOMAIN') && (
+              <a
+                href="https://console.firebase.google.com/u/1/project/syllabus-to-study-plan-agent/authentication/settings"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-semibold transition text-[11px]"
+              >
+                <span>Open Firebase Console → Add localhost</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+            )}
           </div>
         )}
       </div>

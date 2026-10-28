@@ -8,6 +8,14 @@ import fs from 'fs';
 import { GoogleGenAI } from '@google/genai';
 import { localGemmaEngine } from './localGemmaEngine';
 
+// Auto-create .env from .env.example if missing on first boot
+const envPath = path.resolve(process.cwd(), '.env');
+const envExamplePath = path.resolve(process.cwd(), '.env.example');
+if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
+  fs.copyFileSync(envExamplePath, envPath);
+  console.log('[Synapse AI] 📋 Auto-created .env from .env.example for first-time setup.');
+}
+
 dotenv.config();
 
 // ─── Utility Helpers ──────────────────────────────────────────────────────────
@@ -21,7 +29,7 @@ import { initializeApp, cert, getApps, App } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 
 let firebaseAdminApp: App | null = null;
-let clientProjectId = 'charismatic-talon-34mm2';
+let clientProjectId = 'syllabus-to-study-plan-agent';
 
 try {
   const clientConfigPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
@@ -101,8 +109,8 @@ function getAiClient(req?: Request): GoogleGenAI | null {
   return defaultAi;
 }
 
-// Configurable models: Defaults to verified gemini-3.8-flash and gemini-3.8-live
-const DEFAULT_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || 'gemini-3.8-flash';
+// Configurable models: Defaults to stable gemini-2.0-flash and gemini-2.0-flash-live-001
+const DEFAULT_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || 'gemini-3.5-flash';
 const DEFAULT_LIVE_MODEL = process.env.GEMINI_LIVE_MODEL || 'gemini-3.8-live';
 
 // Circuit breaker state for transient 503 unavailability
@@ -151,7 +159,7 @@ async function generateContentWithRetry(params: {
   contents: any;
   config?: any;
 }): Promise<any> {
-  const model = params.model || DEFAULT_TEXT_MODEL;
+  const model = params.model || process.env.GEMINI_TEXT_MODEL || 'gemini-3.5-flash';
 
   if (isCircuitOpen(model)) {
     throw new Error(`Model ${model} is temporarily cooling down due to consecutive failures.`);
@@ -159,33 +167,51 @@ async function generateContentWithRetry(params: {
 
   // Up to 2 bounded attempts for transient errors
   for (let attempt = 1; attempt <= 2; attempt++) {
+    // Per-attempt 55s timeout to prevent indefinite hangs
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 55_000);
     try {
       const response = await params.ai.models.generateContent({
         model,
         contents: params.contents,
         config: params.config,
       });
+      clearTimeout(timeoutId);
       recordCircuitSuccess(model);
       return response;
     } catch (err: any) {
+      clearTimeout(timeoutId);
       const status = err?.status || err?.statusCode || 0;
       const msg = err?.message || '';
 
+      const isAborted = err?.name === 'AbortError' || msg.includes('aborted') || msg.includes('This operation was aborted');
+      const isNetworkErr = msg.includes('fetch failed') || msg.includes('ECONNREFUSED') || msg.includes('ENOTFOUND') || msg.includes('network') || isAborted;
       const isQuota = status === 429 || msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED');
       const isUnavailable = status === 503 || msg.includes('503') || msg.includes('UNAVAILABLE');
+      const isInvalidModel = status === 404 || msg.includes('404') || msg.includes('not found') || msg.includes('invalid model');
 
-      if (isQuota) {
-        console.warn(`[Gemini API] Quota exhausted (429) on ${model}.`);
-        throw new Error('Gemini API quota exhausted (429). Please check your quota or supply an API key.');
-      } else if (isUnavailable) {
-        recordCircuitFailure(model);
-        console.warn(`[Gemini API] Transient 503 on ${model} (attempt ${attempt}/2).`);
+      if (isAborted) {
+        console.warn(`[Gemini API] Request timed out after 55s on ${model} (attempt ${attempt}/2).`);
         if (attempt < 2) {
-          const jitterMs = 400 + Math.floor(Math.random() * 400);
+          await new Promise((r) => setTimeout(r, 1000));
+          continue;
+        }
+        throw new Error('Gemini API request timed out. Check your internet connection or API key validity.');
+      } else if (isInvalidModel) {
+        console.warn(`[Gemini API] Invalid model name "${model}". Please check GEMINI_TEXT_MODEL in .env`);
+        throw new Error(`Invalid Gemini model "${model}". Please check GEMINI_TEXT_MODEL in .env.`);
+      } else if (isQuota) {
+        console.warn(`[Gemini API] Quota exhausted (429) on ${model}.`);
+        throw new Error('Gemini API quota exhausted (429). Please check your quota or supply a different API key.');
+      } else if (isUnavailable || isNetworkErr) {
+        recordCircuitFailure(model);
+        console.warn(`[Gemini API] Transient error on ${model} (attempt ${attempt}/2):`, msg);
+        if (attempt < 2) {
+          const jitterMs = 800 + Math.floor(Math.random() * 400);
           await new Promise((r) => setTimeout(r, jitterMs));
           continue;
         }
-        throw new Error('Gemini service is temporarily unavailable (503). Please retry in a few moments.');
+        throw new Error('Gemini service is temporarily unavailable. Please check your internet connection and API key, then retry.');
       } else {
         console.warn(`[Gemini API] Error on ${model}:`, msg);
         throw err;
@@ -195,6 +221,59 @@ async function generateContentWithRetry(params: {
 
   throw new Error('Inference failed after retry attempts.');
 }
+
+// ─── Health & Key Validation ─────────────────────────────────────────────────
+app.get('/api/health', (_req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    serverKey: Boolean(serverApiKey),
+    textModel: DEFAULT_TEXT_MODEL,
+    liveModel: DEFAULT_LIVE_MODEL,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Validate a Gemini API key with a minimal real API call
+app.post('/api/validate-key', async (req: Request, res: Response) => {
+  const aiClient = getAiClient(req);
+  if (!aiClient) {
+    return res.status(400).json({ valid: false, error: 'No API key provided.' });
+  }
+  try {
+    const response = await aiClient.models.generateContent({
+      model: DEFAULT_TEXT_MODEL,
+      contents: 'Reply with exactly one word: OK',
+      config: { temperature: 0, maxOutputTokens: 5 },
+    });
+    const text = response.text?.trim() || '';
+    return res.json({ valid: true, model: DEFAULT_TEXT_MODEL, response: text });
+  } catch (err: any) {
+    const msg = err?.message || '';
+    const isInvalid = err?.status === 400 || err?.status === 401 || msg.includes('API_KEY_INVALID') || msg.includes('PERMISSION_DENIED');
+    return res.status(isInvalid ? 401 : 503).json({
+      valid: false,
+      error: isInvalid
+        ? 'API key is invalid or expired. Please verify it at https://aistudio.google.com/app/apikey'
+        : msg || 'Gemini service unreachable.',
+    });
+  }
+});
+
+// Live S2S token endpoint for browser Gemini Live WebSocket
+app.post('/api/voice/live-token', (req: Request, res: Response) => {
+  const clientKey = (req.headers['x-gemini-api-key'] as string)?.trim();
+  const token = clientKey || serverApiKey;
+  if (!token) {
+    return res.status(401).json({
+      error: 'API_KEY_REQUIRED',
+      message: 'No Gemini API key found. Please set your key in the top navigation or in .env.',
+    });
+  }
+  return res.json({
+    token,
+    model: process.env.GEMINI_LIVE_MODEL || 'gemini-2.0-flash-exp',
+  });
+});
 
 // ─── Dual-Engine Status & Mode Management ─────────────────────────────────────
 app.get('/api/ai-engine/status', async (req: Request, res: Response) => {
@@ -932,7 +1011,7 @@ async function startServer() {
   }
 
   app.listen(port, '0.0.0.0', () => {
-    console.log(`[Synapse AI] Server running on http://localhost:${port}`);
+    console.log(`\n======================================================\n  🚀 Synapse AI — Study Plan & Voice Coach Agent\n  🔗 Running at: http://localhost:${port}\n  🤖 AI Model:   ${DEFAULT_TEXT_MODEL} (Text) | ${DEFAULT_LIVE_MODEL} (Voice)\n  🔑 Gemini Key: ${serverApiKey ? 'Configured in .env ✓' : 'Not set in .env (enter in browser UI)'}\n======================================================\n`);
   });
 }
 

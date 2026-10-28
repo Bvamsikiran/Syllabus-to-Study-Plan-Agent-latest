@@ -17,6 +17,9 @@ import { ModernStudyDashboard } from './components/ModernStudyDashboard';
 import { VoiceStudyCoach } from './components/VoiceStudyCoach';
 import { GenerativeAITutor } from './components/GenerativeAITutor';
 import { ApiKeyModal } from './components/ApiKeyModal';
+import { SetupBanner } from './components/SetupBanner';
+import { PrintableStudyPlanModal } from './components/PrintableStudyPlanModal';
+import { OnboardingTour } from './components/OnboardingTour';
 import { apiKeyService } from './services/apiKeyService';
 import { GoogleAuthProviderComponent, useGoogleAuth } from './context/GoogleAuthContext';
 import { GoogleDriveModal } from './components/GoogleDriveModal';
@@ -51,6 +54,8 @@ function AppContent() {
 
   const [currentScreen, setCurrentScreen] = useState<ScreenId>(getInitialScreen);
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState<boolean>(false);
+  const [printModalOpen, setPrintModalOpen] = useState<boolean>(false);
+  const [tourOpen, setTourOpen] = useState<boolean>(() => !localStorage.getItem('synapse_onboarding_completed'));
 
   // Global state across onboarding & planner — strictly starts empty
   const [syllabusText, setSyllabusText] = useState<string>('');
@@ -269,7 +274,12 @@ function AppContent() {
         currentScreen={currentScreen}
         onNavigate={navigateTo}
         onOpenApiKeyModal={() => setApiKeyModalOpen(true)}
+        onOpenPrintModal={() => setPrintModalOpen(true)}
+        onStartTour={() => setTourOpen(true)}
       />
+
+      {/* Setup / health status banners */}
+      <SetupBanner onOpenApiKeyModal={() => setApiKeyModalOpen(true)} />
 
       {/* Screen Render */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -401,6 +411,30 @@ function AppContent() {
         currentModules={modules}
         targetDate={targetDate}
         targetScore={targetScore}
+      />
+
+      {/* Printable / PDF Study Plan Modal (Offline Export) */}
+      <PrintableStudyPlanModal
+        isOpen={printModalOpen}
+        onClose={() => setPrintModalOpen(false)}
+        courseName={parsedData?.courseName || 'Active Study Plan'}
+        modules={modules}
+        resources={resources}
+        targetDate={targetDate}
+        targetScore={targetScore}
+      />
+
+      {/* First-Run Onboarding Spotlight Tour */}
+      <OnboardingTour
+        isOpen={tourOpen}
+        onClose={() => setTourOpen(false)}
+        onOpenApiKeyModal={() => {
+          setTourOpen(false);
+          setApiKeyModalOpen(true);
+        }}
+        onNavigateToStep1={() => {
+          navigateTo('step1-upload');
+        }}
       />
     </div>
   );

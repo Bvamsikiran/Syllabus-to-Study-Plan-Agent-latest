@@ -23,6 +23,7 @@ import {
   Brain,
   CheckCircle,
   Key,
+  Printer,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -49,6 +50,8 @@ interface ModernStudyDashboardProps {
   onOpenUploadModal?: () => void;
   onOpenResourceModal?: () => void;
   onOpenApiKeyModal?: () => void;
+  onOpenPrintModal?: () => void;
+  onStartTour?: () => void;
 }
 
 export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
@@ -60,6 +63,8 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
   onOpenUploadModal,
   onOpenResourceModal,
   onOpenApiKeyModal,
+  onOpenPrintModal,
+  onStartTour,
 }) => {
   const { user, signIn, signOut } = useGoogleAuth();
 
@@ -304,6 +309,18 @@ export const ModernStudyDashboard: React.FC<ModernStudyDashboardProps> = ({
               <Key className="w-3.5 h-3.5" />
               <span>{hasApiKey ? 'Gemini Active' : 'Set API Key'}</span>
             </button>
+
+            {/* Offline Printable / PDF Study Plan Button */}
+            {onOpenPrintModal && (
+              <button
+                onClick={onOpenPrintModal}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 text-xs font-semibold transition cursor-pointer"
+                title="Printable Study Plan & Save as PDF"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>PDF / Print</span>
+              </button>
+            )}
 
             {/* Google Authentication & Workspace Menu */}
             <GoogleAuthButton />

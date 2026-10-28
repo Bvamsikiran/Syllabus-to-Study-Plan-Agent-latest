@@ -1,5 +1,5 @@
 {
-  "name": "react-example",
+  "name": "synapse-study-agent",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,7 +8,7 @@
     "build": "vite build",
     "start": "tsx server.ts",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
+    "clean": "node -e \"const fs=require('fs'); fs.rmSync('dist', {recursive:true, force:true}); fs.rmSync('server.js', {force:true})\"",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

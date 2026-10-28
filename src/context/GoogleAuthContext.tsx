@@ -85,9 +85,14 @@ export const GoogleAuthProviderComponent: React.FC<{ children: React.ReactNode }
   };
 
   const handleRequestScope = async (scopes: string[]): Promise<string> => {
-    const token = await requestIncrementalScope(scopes);
+    try {
+      setIsSigningIn(true);
+      const token = await requestIncrementalScope(scopes);
     setAccessToken(token);
-    return token;
+      return token;
+    } finally {
+      setIsSigningIn(false);
+    }
   };
 
   return (

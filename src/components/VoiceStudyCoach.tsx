@@ -227,10 +227,12 @@ export const VoiceStudyCoach: React.FC<VoiceStudyCoachProps> = ({
 
       if (!tokenRes.ok) {
         const errJson = await tokenRes.json().catch(() => ({}));
-        throw new Error(errJson.error || errJson.message || 'Failed to mint Live token');
+        throw new Error(errJson.error || errJson.message || 'Failed to connect. Please set your Gemini API key in the top navigation.');
       }
 
-      const { token, model } = await tokenRes.json();
+      const { token: serverToken, model: serverModel } = await tokenRes.json();
+      const token = apiKeyService.getKey() || serverToken;
+      const model = serverModel || 'gemini-2.0-flash-exp';
 
       // 2. Build system instruction for the In-Depth Academic Lecturer persona
       const systemInstruction = `You are a distinguished Professor and Master Academic Coach in ${courseName || 'your course'}.

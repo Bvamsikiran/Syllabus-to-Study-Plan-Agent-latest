@@ -2,19 +2,23 @@ import React from 'react';
 import { ScreenId } from '../types';
 import { GoogleAuthButton } from './GoogleAuthButton';
 import { useGoogleAuth } from '../context/GoogleAuthContext';
-import { HardDrive, Mail, Presentation, FileQuestion, Sparkles, Brain, Key } from 'lucide-react';
+import { HardDrive, Mail, Presentation, FileQuestion, Sparkles, Brain, Key, Printer, HelpCircle } from 'lucide-react';
 import { apiKeyService } from '../services/apiKeyService';
 
 interface NavigationHeaderProps {
   currentScreen: ScreenId;
   onNavigate: (screen: ScreenId) => void;
   onOpenApiKeyModal?: () => void;
+  onOpenPrintModal?: () => void;
+  onStartTour?: () => void;
 }
 
 export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
   currentScreen,
   onNavigate,
   onOpenApiKeyModal,
+  onOpenPrintModal,
+  onStartTour,
 }) => {
   const [collapsed, setCollapsed] = React.useState(false);
   const [hasKey, setHasKey] = React.useState(apiKeyService.hasKey());
@@ -134,6 +138,24 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
         >
           <Mail className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Gmail</span>
+        </button>
+
+        <button
+          onClick={onOpenPrintModal}
+          className="flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 transition-all font-sans text-xs font-medium cursor-pointer"
+          title="Printable Study Plan & Save as PDF"
+        >
+          <Printer className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">PDF / Print</span>
+        </button>
+
+        <button
+          onClick={onStartTour}
+          className="flex items-center gap-1 px-2 py-1 rounded-md bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 transition-all font-sans text-xs font-medium cursor-pointer"
+          title="Interactive Setup Tour"
+        >
+          <HelpCircle className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Tour</span>
         </button>
 
         <button
